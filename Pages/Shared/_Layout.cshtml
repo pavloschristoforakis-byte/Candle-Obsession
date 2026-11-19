@@ -1,0 +1,61 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] | Candle Obsession</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body>
+
+    <header class="main-header">
+
+        <a class="brand" href="/">
+            CANDLE OBSESSION
+        </a>
+
+        <nav class="main-nav">
+
+            <a href="/">Home</a>
+
+            <a href="/#collection">Shop</a>
+
+            <a href="/#about">Our Story</a>
+
+            <a href="https://www.instagram.com/candleobsession__/">
+                Instagram
+            </a>
+            <a asp-page="/Cart" id="cart-link">
+                🛒 Cart (<span id="cart-count">0</span>)
+            </a>
+        </nav>
+
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <footer class="main-footer">
+
+        <h2>CANDLE OBSESSION</h2>
+
+        <p>Made with love, inspired by light.</p>
+
+        <p>&copy; 2026 Candle Obsession</p>
+
+    </footer>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>
