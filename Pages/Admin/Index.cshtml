@@ -1,0 +1,108 @@
+@page "/admin/{id:int?}"
+@model Candle_Obsession.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Orders";
+    ViewData["NoIndex"] = true;
+    ViewData["PageClass"] = "page-admin";
+    var s = Model.Selected;
+}
+<section class="section admin">
+    <header class="admin-head">
+        <h1>Orders</h1>
+        <form method="post" asp-page="/Admin/Login" asp-page-handler="Logout"><button class="button button-small button-ghost" type="submit">Log out</button></form>
+    </header>
+
+    @if (s is not null)
+    {
+        <article class="admin-order">
+            <h2>Order #@s.Id <small>@s.OrderDate.ToString("yyyy-MM-dd HH:mm") UTC · ref @s.PublicId</small></h2>
+            <div class="admin-cols">
+                <div>
+                    <h3>Customer</h3>
+                    <p>@s.CustomerName<br /><a href="mailto:@s.Email">@s.Email</a><br /><a href="tel:@s.Phone">@s.Phone</a></p>
+                    <h3>Delivery: @s.DeliveryMethod</h3>
+                    <p>@s.Address @s.City @s.PostalCode @s.Country @s.Locker</p>
+                    @if (s.GiftWrap || s.GiftMessage is not null)
+                    {
+                        <h3>Gift</h3>
+                        <p>@(s.GiftWrap ? "Gift wrap: yes" : "No gift wrap")</p>
+                        @if (s.GiftMessage is not null)
+                        {
+                            <p>Message: “@s.GiftMessage”</p>
+                        }
+                    }
+                    @if (s.Notes is not null) { <h3>Notes</h3><p>@s.Notes</p> }
+                    @if (s.AgeConfirmed) { <p><strong>Age confirmed (wine)</strong></p> }
+                </div>
+                <div>
+                    <h3>Items</h3>
+                    <ul class="summary-items">
+                        @foreach (var i in s.OrderItems)
+                        {
+                            <li class="summary-item"><span>@i.Quantity × @i.DisplayName <small>@i.Sku @i.OptionsSummary</small></span><span>@Money.Eur(i.TotalPrice)</span></li>
+                        }
+                    </ul>
+                    <p>Subtotal @Money.Eur(s.Subtotal) · Delivery @Money.Eur(s.ShippingCost) · Gift wrap @Money.Eur(s.GiftWrapCost)<br /><strong>Total @Money.Eur(s.Total)</strong></p>
+                    <p>Payment: @s.PaymentMethod · @s.PaymentProvider · @s.PaymentReference</p>
+                    <form method="post" asp-page-handler="Status" asp-route-id="@s.Id" class="admin-status">
+                        <label>Order status
+                            <select name="orderStatus">@foreach (var st in OrderStatuses.All) { <option selected="@(st == s.OrderStatus)">@st</option> }</select>
+                        </label>
+                        <label>Payment status
+                            <select name="paymentStatus">@foreach (var st in PaymentStatuses.All) { <option selected="@(st == s.PaymentStatus)">@st</option> }</select>
+                        </label>
+                        <button class="button button-small" type="submit">Save</button>
+                    </form>
+                </div>
+            </div>
+        </article>
+    }
+
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>#</th><th>Date (UTC)</th><th>Customer</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var o in Model.Orders)
+                {
+                    <tr class="@(o.Id == s?.Id ? "is-selected" : null)">
+                        <td><a href="/admin/@o.Id">@o.Id</a></td>
+                        <td>@o.OrderDate.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@o.CustomerName</td>
+                        <td>@o.OrderItems.Sum(i => i.Quantity)</td>
+                        <td>@Money.Eur(o.Total)</td>
+                        <td>@o.PaymentMethod · @o.PaymentStatus</td>
+                        <td>@o.OrderStatus</td>
+                    </tr>
+                }
+                @if (Model.Orders.Count == 0) { <tr><td colspan="7">No orders yet.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Withdrawal requests</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead><tr><th>#</th><th>Received (UTC)</th><th>Name / email</th><th>Order</th><th>Items</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var w in Model.Withdrawals)
+                {
+                    <tr>
+                        <td>@w.Id</td>
+                        <td>@w.SubmittedAtUtc.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@w.Name<br /><a href="mailto:@w.Email">@w.Email</a></td>
+                        <td>@if (w.OrderId is not null) { <a href="/admin/@w.OrderId">#@w.OrderId</a> } else { @w.OrderReference }</td>
+                        <td>@(w.Details ?? "Whole order")</td>
+                        <td>
+                            @if (w.Handled) { <span>Handled</span> }
+                            else
+                            {
+                                <form method="post" asp-page-handler="WithdrawalHandled" asp-route-id="@w.Id"><button class="button button-small button-ghost" type="submit">Mark handled</button></form>
+                            }
+                        </td>
+                    </tr>
+                }
+                @if (Model.Withdrawals.Count == 0) { <tr><td colspan="6">None.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</section>

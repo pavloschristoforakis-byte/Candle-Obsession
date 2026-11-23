@@ -1,0 +1,21 @@
+import { chromium } from 'playwright';
+const B = 'http://localhost:5199';
+const browser = await chromium.launch();
+const page = await (await browser.newContext()).newPage();
+page.on('console', (m) => console.log('  [console]', m.type(), m.text()));
+page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
+await page.goto(B + '/terms');
+await page.evaluate(() => { localStorage.clear(); localStorage.setItem('cart', JSON.stringify([{ name: 'Strawbery', price: 15, quantity: 2 }, { name: 'Strawberry', price: 15, quantity: 1 }, { name: 'Macademia Vanilla', price: 13, quantity: 50 }, { name: 'Nope', price: 1, quantity: 1 }])); });
+console.log('before', await page.evaluate(() => [localStorage.getItem('cart'), localStorage.getItem('co.cart.v2')]));
+await page.goto(B + '/shop');
+await page.waitForTimeout(800);
+console.log('after', await page.evaluate(() => [localStorage.getItem('cart'), localStorage.getItem('co.cart.v2')]));
+console.log('badge', await page.textContent('[data-cart-count]'));
+console.log('catalog has strawberry legacy', await page.evaluate(() => JSON.parse(document.getElementById('co-catalog').textContent).find(p => p.id === 'strawberry').legacyNames));
+await page.goto(B + '/cart'); await page.waitForTimeout(800);
+console.log('cart lines', await page.locator('.cart-page .cart-line').count(), await page.locator('.cart-page .cart-line-name').allTextContents());
+// remove first strawberry line, count remaining
+await page.locator('.cart-page .cart-line button[aria-label^="Remove"]').first().click();
+await page.waitForTimeout(300);
+console.log('after removing one', await page.evaluate(() => localStorage.getItem('co.cart.v2')));
+await browser.close();

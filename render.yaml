@@ -1,0 +1,83 @@
+# Render Blueprint for Candle Obsession (production / launch setup)
+# Docs: https://render.com/docs/blueprint-spec   (checked 2026-11-23)
+#
+# What this creates: ONE Docker web service in Frankfurt (EU) with a 1 GB
+# persistent disk mounted at /data (where the SQLite order database and the
+# data-protection keys in /data/keys live).
+#
+# How to use: Render Dashboard -> New -> Blueprint -> pick this GitHub repo.
+# Render will ask you to type in every value marked `sync: false` (secrets).
+# Those secrets are NEVER stored in this file. Do not commit real secrets.
+# Every variable is explained in .env.example.
+#
+# NOTE: A persistent disk needs a paid instance. The Free plan cannot have a
+# disk, so this file is the LAUNCH configuration. For free testing, follow
+# "Guide A" in HOSTING.md (create a Free web service by hand, no disk).
+
+services:
+  - type: web
+    name: candle-obsession
+    runtime: docker
+    region: frankfurt            # EU (Germany). Cannot be changed after creation.
+    plan: 0.5c-512mb             # $7/month: 0.5 CPU, 512 MB RAM (the old "Starter" size)
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit    # every push to the linked branch redeploys
+
+    # Pull-request previews: only created when you ask for one (label the PR
+    # "render-preview"). Previews of a paid service are billed like the main
+    # service (prorated per second). Treat preview data as throwaway.
+    previews:
+      generation: manual
+
+    disk:
+      name: candle-data
+      mountPath: /data
+      sizeGB: 1                  # $0.25/GB/month. Can grow later, never shrink.
+
+    envVars:
+      # --- Non-secret settings -------------------------------------------
+      # (HTTPS behind Render's proxy is handled in Program.cs with forwarded
+      # headers, so ASPNETCORE_FORWARDEDHEADERS_ENABLED is NOT needed.)
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_HTTP_PORTS
+        value: "8080"
+      - key: PORT                # tells Render which port the container listens on
+        value: "8080"
+      - key: ConnectionStrings__DefaultConnection
+        value: Data Source=/data/candleobsession.db
+      - key: Shop__BaseUrl
+        value: https://candleobsession.com.cy   # change if you use a different domain
+      - key: Checkout__Provider
+        value: Manual            # Manual | PaymentLinks | StripeCheckout (see INTEGRATION.md)
+      - key: Checkout__ShowBuyNowButtons
+        value: "false"
+      - key: Smtp__Port
+        value: "587"             # paid instances may use 587; the Free plan needs 2525
+      - key: Smtp__EnableSsl
+        value: "true"
+
+      # --- Secrets / personal details: Render asks for these when you create
+      # the Blueprint. Leave any you don't use empty.
+      - key: Admin__Password
+        sync: false
+      - key: Shop__OrderNotificationEmail
+        sync: false
+      - key: Shop__ContactEmail
+        sync: false
+      - key: Checkout__PaymentLinks__FallbackUrl
+        sync: false
+      - key: Checkout__Stripe__SecretKey
+        sync: false
+      - key: Checkout__Stripe__WebhookSecret
+        sync: false
+      - key: Smtp__Host
+        sync: false
+      - key: Smtp__User
+        sync: false
+      - key: Smtp__Password
+        sync: false
+      - key: Smtp__From
+        sync: false

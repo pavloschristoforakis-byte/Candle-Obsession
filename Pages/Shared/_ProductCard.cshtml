@@ -1,0 +1,120 @@
+@model Product
+@inject ProductCatalog Catalog
+@{
+    var p = Model;
+    var image = p.MainImage;
+    var flame = image?.Flame;
+    var categoryName = Catalog.Category(p.Category)?.Name;
+    var simple = !p.HasVariants && p.Options.Count == 0;
+    var canBuy = p.AnyPurchasable;
+    var flameStyle = flame is null
+        ? null
+        : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%");
+    var headingLevel = ViewData["CardHeading"] as string ?? "h3";
+}
+<article class="product-card@(p.IsCandle ? " is-candle" : "")@(p.GiftSet ? " is-gift" : "")@(flame is null ? " flame-default" : "")@(p.IsSoldOut ? " is-sold-out" : "")"
+         data-product-card
+         data-candle="@(p.IsCandle ? "true" : null)"
+         style="@flameStyle">
+    <a class="product-media" href="@p.Url" tabindex="-1" aria-hidden="true">
+        @if (image is not null)
+        {
+            <img src="@image.Src(800)" srcset="@image.SrcSet"
+                 sizes="(max-width: 600px) calc(50vw - 22px), (max-width: 860px) 46vw, (max-width: 1100px) 34vw, 360px"
+                 width="800" height="1000" loading="lazy" decoding="async" alt="@image.Alt" />
+        }
+        else
+        {
+            <span class="media-placeholder">
+                <svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg>
+                <span>Photo coming soon</span>
+            </span>
+        }
+        @if (p.IsCandle && flame is not null)
+        {
+            <partial name="_Flame" />
+        }
+    </a>
+    <div class="product-body">
+        @if (p.IsCandle && flame is null)
+        {
+            <partial name="_Flame" />
+        }
+        <ul class="product-badges" aria-label="Product labels">
+            @if (p.IsSoldOut)
+            {
+                <li class="badge badge-muted">Sold out</li>
+            }
+            else if (!canBuy)
+            {
+                <li class="badge">@(p.PriceNote is not null && p.StockStatus == StockStatus.Enquire ? "Ask to order" : StockStatus.Label(p.StockStatus))</li>
+            }
+            @if (p.GiftSet)
+            {
+                <li class="badge badge-gift">Gift set</li>
+            }
+            @if (p.CompareAtPriceEur is not null)
+            {
+                <li class="badge badge-sale">Offer</li>
+            }
+        </ul>
+        @if (categoryName is not null)
+        {
+            <p class="product-category">@categoryName</p>
+        }
+        @if (headingLevel == "h2")
+        {
+            <h2 class="product-title"><a href="@p.Url">@p.Name</a></h2>
+        }
+        else
+        {
+            <h3 class="product-title"><a href="@p.Url">@p.Name</a></h3>
+        }
+        @if (p.Scent.Tags.Count > 0)
+        {
+            <p class="product-scent">@string.Join(" · ", p.Scent.Tags.Take(3))</p>
+        }
+        else
+        {
+            <p class="product-scent">@p.ShortDescription</p>
+        }
+        <div class="product-foot">
+            <p class="price">
+                @if (p.MinPurchasablePrice is { } price && canBuy)
+                {
+                    @if (p.HasPriceRange)
+                    {
+                        <span class="price-from">from</span>
+                    }
+                    <span>@Money.Eur(price)</span>
+                    @if (p.CompareAtPriceEur is { } was)
+                    {
+                        <s class="price-was"><span class="visually-hidden">was </span>@Money.Eur(was)</s>
+                    }
+                }
+                else if (p.PriceNote is not null)
+                {
+                    <span>@p.PriceNote</span>
+                }
+                else
+                {
+                    <span class="price-request">Price on request</span>
+                }
+            </p>
+            @if (canBuy && simple)
+            {
+                <button type="button" class="button button-small" data-add-to-cart data-product-id="@p.Id">
+                    <span>Add to cart</span>
+                </button>
+            }
+            else if (canBuy)
+            {
+                <a class="button button-small button-ghost" href="@p.Url">Choose options</a>
+            }
+            else
+            {
+                <a class="button button-small button-ghost" href="@p.Url">Details</a>
+            }
+        </div>
+    </div>
+</article>

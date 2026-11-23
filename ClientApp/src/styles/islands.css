@@ -1,0 +1,76 @@
+/* Styles for JS-driven UI (bundled into /dist/app.css). Tokens come from wwwroot/css/site.css. */
+
+/* ---------- Ember particle (add to cart) ---------- */
+.ember-particle {
+  position: fixed; z-index: 120; width: 14px; height: 14px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, #fffbe6 0 20%, #ffd27a 40%, #ff9a2e 70%, rgba(255, 120, 20, 0) 72%);
+  box-shadow: 0 0 12px 4px rgba(255, 170, 60, 0.85), 0 0 30px 8px rgba(255, 130, 40, 0.4);
+  will-change: transform, opacity;
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 130;
+  display: flex; align-items: center; gap: 1rem; max-width: calc(100vw - 32px); padding: 0.8rem 1rem 0.8rem 1.2rem;
+  border-radius: 999px; background: var(--color-espresso); color: var(--color-text-on-dark); box-shadow: var(--shadow);
+  font-size: 0.95rem; transform: translate(-50%, 140%); opacity: 0; transition: transform 0.4s var(--ease-spring), opacity 0.3s;
+}
+.toast.is-visible { transform: translate(-50%, 0); opacity: 1; }
+.toast-action { color: var(--color-glow); font-weight: 500; white-space: nowrap; }
+.toast-action:hover { color: #fff; }
+
+/* ---------- Cart drawer ---------- */
+html.drawer-open { overflow: hidden; }
+.drawer-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(28, 18, 11, 0.45); backdrop-filter: blur(2px); }
+.cart-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 110; display: flex; flex-direction: column;
+  width: min(440px, 100vw); background: var(--color-cream); box-shadow: -20px 0 60px rgba(28, 18, 11, 0.25);
+}
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.2rem 1rem 1.5rem; border-bottom: 1px solid var(--color-line); }
+.drawer-head h2 { margin: 0; font-size: 1.5rem; }
+.drawer-count { color: var(--color-text-muted); font-family: var(--font-body); font-size: 1rem; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 1rem 1.5rem 1.5rem; overscroll-behavior: contain; }
+
+/* ---------- Cart view (drawer + /cart page) ---------- */
+.cart-lines { list-style: none; margin: 0; padding: 0; }
+.cart-line { display: grid; grid-template-columns: 80px 1fr auto; gap: 1rem; align-items: start; padding: 1rem 0; border-bottom: 1px solid var(--color-line); }
+.cart-line-img { width: 80px; height: 100px; object-fit: cover; border-radius: 10px; }
+.cart-line-img.media-placeholder .icon { width: 28px; height: 28px; }
+.cart-line-info { display: grid; gap: 0.15rem; min-width: 0; }
+.cart-line-info small { color: var(--color-text-muted); font-size: 0.85rem; }
+.cart-line-name { font-family: var(--font-display); font-size: 1.12rem; color: var(--color-cocoa); text-decoration: none; }
+.cart-line-name:hover { text-decoration: underline; }
+.cart-line-warning { color: var(--color-danger) !important; }
+.cart-line-controls { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.4rem; flex-wrap: wrap; }
+.cart-line-total { font-weight: 500; white-space: nowrap; }
+.cart-line.is-unavailable .cart-line-img { opacity: 0.5; }
+.cart-summary { padding-top: 1.2rem; display: grid; gap: 0.6rem; }
+.cart-subtotal { display: flex; justify-content: space-between; align-items: baseline; margin: 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--color-cocoa); }
+.cart-note { display: flex; gap: 0.5rem; align-items: center; color: var(--color-text-muted); font-size: 0.9rem; margin: 0; }
+.cart-summary .text-link { justify-self: center; }
+.cart-empty { display: grid; justify-items: center; gap: 0.8rem; padding: 2.5rem 1rem; text-align: center; color: var(--color-text-muted); }
+.cart-empty > .icon { width: 44px; height: 44px; color: var(--color-caramel); }
+.cart-page .cart-view:not(.is-compact) { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); gap: 2.5rem; align-items: start; }
+.cart-page .cart-summary { background: var(--color-paper); border-radius: var(--radius-lg); padding: 1.5rem; box-shadow: var(--shadow-sm); }
+@media (max-width: 760px) {
+  .cart-page .cart-view:not(.is-compact) { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+/* ---------- Gift box reveal ---------- */
+.gift-reveal { display: grid; justify-items: center; }
+.gift-box {
+  display: grid; justify-items: center; gap: 0.4rem; padding: 0.5rem 1.5rem 0.8rem; border: 0; border-radius: var(--radius-lg);
+  background: transparent; color: var(--color-cocoa);
+}
+.gift-box svg { width: clamp(180px, 26vw, 240px); height: auto; overflow: visible; filter: drop-shadow(0 18px 24px rgba(91, 58, 30, 0.22)); }
+.gift-box-label { font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-amber); }
+.gift-reveal:not(.is-open) .gift-box svg { animation: gift-bob 3.2s ease-in-out infinite; }
+@keyframes gift-bob { 0%, 100% { transform: translateY(0) rotate(-0.6deg); } 50% { transform: translateY(-6px) rotate(0.6deg); } }
+@media (prefers-reduced-motion: reduce) { .gift-box svg { animation: none !important; } }
+
+/* ---------- React Bits overrides to match the palette ---------- */
+.guide-link .guide-tile { height: 100%; padding: 1.6rem; }
+/* Cart quantity: the live region wraps the number so screen readers hear "Quantity of X: 2" */
+.qty-live { position: relative; display: inline-flex; }
+.qty-live .qty-value { display: inline-block; }
+.hero-eyebrow [class*="shiny"] { letter-spacing: inherit; }

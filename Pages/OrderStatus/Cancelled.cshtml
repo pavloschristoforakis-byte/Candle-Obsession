@@ -1,0 +1,52 @@
+@page "/order/cancelled/{reference}"
+@model Candle_Obsession.Pages.OrderStatus.CancelledModel
+@{
+    ViewData["Title"] = "Payment not completed";
+    ViewData["NoIndex"] = true;
+    var o = Model.Order;
+}
+
+<section class="order-result" aria-labelledby="result-title">
+    <div class="order-result-card">
+        <div class="result-candle" aria-hidden="true">
+            <span class="product-card is-candle is-out result-flame" data-candle>
+                <partial name="_Flame" />
+            </span>
+        </div>
+        <p class="eyebrow">Order <span translate="no">@o.PublicId[..8]</span></p>
+        <h1 id="result-title">Payment not completed</h1>
+        @if (o.OrderStatus == OrderStatuses.Cancelled || o.PaymentStatus is PaymentStatuses.Cancelled or PaymentStatuses.Refunded)
+        {
+            <p class="result-lede">This order has been cancelled. If you have any questions, please contact us and quote the reference below.</p>
+        }
+        else
+        {
+            <p class="result-lede">
+                No money has been taken. Your order is saved and your cart is still here, so you can try again
+                whenever you're ready.
+            </p>
+        }
+
+        <div class="result-actions">
+            @if (Model.PaymentUrl is not null)
+            {
+                <a class="button" href="@Model.PaymentUrl" rel="noopener">
+                    <svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg>
+                    Continue to secure payment (@Money.Eur(o.Total))
+                </a>
+            }
+            @if (Model.CanRetry && Model.PaymentUrl is null)
+            {
+                <form method="post" asp-page-handler="Retry" asp-route-reference="@o.PublicId">
+                    <button type="submit" class="button">
+                        <svg class="icon" aria-hidden="true"><use href="#i-lock"></use></svg>
+                        Try payment again (@Money.Eur(o.Total))
+                    </button>
+                </form>
+            }
+            <a class="button button-outline" href="/cart">Back to cart</a>
+            <a class="button button-outline" href="/contact">Contact us</a>
+        </div>
+        <p class="result-ref">Reference: <code>@o.PublicId</code></p>
+    </div>
+</section>

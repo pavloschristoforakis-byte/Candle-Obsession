@@ -1,73 +1,190 @@
 ﻿@page
 @model IndexModel
-
+@inject ProductCatalog Catalog
+@inject IOptions<ShopOptions> ShopOpts
+@inject SiteUrls Urls
 @{
     ViewData["Title"] = "Candle Obsession";
+    ViewData["Description"] = "Handmade scented candles, wax melts, wax flowers and gift boxes, hand-poured in Cyprus by Candle Obsession. Delivery across Cyprus.";
+    ViewData["PageClass"] = "page-home";
+    var shop = ShopOpts.Value;
+    var featured = Catalog.Featured.ToList();
+    var giftSets = Catalog.Products.Where(p => p.GiftSet).ToList();
 }
 
-<section class="hero" id="home">
+@section Head {
+    <link rel="preload" as="image" href="/images/brand/hero-1600.webp"
+          imagesrcset="/images/brand/hero-960.webp 960w, /images/brand/hero-1600.webp 1600w, /images/brand/hero-2400.webp 2400w"
+          imagesizes="100vw" fetchpriority="high" />
+    <script type="application/ld+json">
+        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "Store",
+            ["name"] = shop.Name,
+            ["description"] = "Handmade candles, wax melts and gift boxes from Cyprus.",
+            ["url"] = Urls.Absolute(HttpContext, "/"),
+            ["logo"] = Urls.Absolute(HttpContext, "/images/brand/logo-full.png"),
+            ["image"] = Urls.Absolute(HttpContext, "/images/brand/og-default.jpg"),
+            ["sameAs"] = new[] { shop.InstagramUrl },
+            ["address"] = new Dictionary<string, string> { ["@type"] = "PostalAddress", ["addressCountry"] = "CY" },
+            ["currenciesAccepted"] = "EUR",
+        }).Replace("</", "<\\/"))
+    </script>
+}
+
+<section class="hero" id="home" aria-labelledby="hero-title">
+    <picture class="hero-bg" aria-hidden="true">
+        <source type="image/webp"
+                srcset="/images/brand/hero-960.webp 960w, /images/brand/hero-1600.webp 1600w, /images/brand/hero-2400.webp 2400w"
+                sizes="100vw" />
+        <img src="/images/brand/hero-1600.jpg" alt="" width="1600" height="893" fetchpriority="high" decoding="async" />
+    </picture>
+    <div class="hero-ambient" aria-hidden="true">
+        <span class="ember-light l1"></span>
+        <span class="ember-light l2"></span>
+        <span class="ember-light l3"></span>
+    </div>
 
     <div class="hero-content">
-
-        <p class="subtitle">HANDMADE WITH LOVE</p>
-
-        <h1>Light up your moments.</h1>
-
-        <p>Discover the beauty of handmade candles.</p>
-
-        <a href="#collection" class="hero-button">
-            EXPLORE COLLECTION
-        </a>
-
+        <p class="eyebrow hero-eyebrow">
+            <span data-island="shiny-text" data-text="HANDMADE WITH LOVE IN CYPRUS">HANDMADE WITH LOVE IN CYPRUS</span>
+        </p>
+        <h1 id="hero-title" class="hero-title" data-island="hero-title" data-text="Light up your moments.">Light up your moments.</h1>
+        <p class="hero-lede">Scented candles, wax flowers and gift boxes, handmade in Cyprus.</p>
+        <div class="hero-actions">
+            <a href="#collection" class="button button-light">Explore the collection</a>
+            <a href="#gift-guide" class="button button-outline-light">
+                <svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg>
+                Find a gift
+            </a>
+        </div>
     </div>
-
 </section>
 
-<section class="collection" id="collection">
-
-    <p class="subtitle">DISCOVER OUR PRODUCTS</p>
-
-    <h2>Our Collection</h2>
+<section class="section collection" id="collection" aria-labelledby="collection-title">
+    <header class="section-head reveal">
+        <p class="eyebrow">Discover our products</p>
+        <h2 id="collection-title">Our Collection</h2>
+        <p class="section-lede">Hover over a candle (or tap it) to light it. Every piece is handmade, so each one is a little bit unique.</p>
+    </header>
 
     <div class="product-grid">
-
-        <div class="product-card">
-            <img src="/images/candle1.jpg" alt="Macademia Vanilla">
-            <h3>Macademia Vanilla</h3>
-            <p>€13.00</p>
-            <button class="cart-button" onclick="addToCart('Macademia Vanilla', 13)">
-                Add to Cart
-            </button>
-        </div>
-
-        <div class="product-card">
-            <img src="/images/candle2.jpg" alt="Baby Powder">
-            <h3>Baby Powder</h3>
-            <p>€15.00</p>
-            <button class="cart-button" onclick="addToCart('Baby Powder', 15)">
-                Add to Cart
-            </button>
-        </div>
-
-        <div class="product-card">
-            <img src="/images/candle3.jpg" alt="Apple Pie">
-            <h3>Apple Pie</h3>
-            <p>€12.00</p>
-            <button class="cart-button" onclick="addToCart('Apple Pie', 12)">
-                Add to Cart
-            </button>
-        </div>
-        
-        <div class="product-card">
-            <img src="/images/candle4.jpg" alt="Strawbery">
-            <h3>Strawbery</h3>
-            <p>€15.00</p>
-            <button class="cart-button" onclick="addToCart('Strawbery', 15)">
-                Add to Cart
-            </button>
-        </div>
-
-
+        @foreach (var product in featured)
+        {
+            <partial name="_ProductCard" model="product" />
+        }
     </div>
 
+    <p class="section-more">
+        <a href="/shop" class="button button-outline">
+            View all @Catalog.Products.Count products
+            <svg class="icon" aria-hidden="true"><use href="#i-arrow"></use></svg>
+        </a>
+    </p>
+</section>
+
+<partial name="_WaxDrip" model="@("light")" />
+
+<section class="section gift-guide" id="gift-guide" aria-labelledby="gift-guide-title">
+    <header class="section-head reveal">
+        <p class="eyebrow">Not sure what to choose?</p>
+        <h2 id="gift-guide-title">Gift Guide</h2>
+        <p class="section-lede">A few easy starting points for the people you love.</p>
+    </header>
+
+    @{
+        var guideJson = System.Text.Json.JsonSerializer.Serialize(Catalog.Guides.Select(g => new
+        {
+            id = g.Id,
+            name = g.Name,
+            description = g.Description,
+            icon = g.Icon,
+            count = Catalog.InGuide(g).Count(),
+            url = $"/shop?guide={g.Id}",
+        }), ProductCatalog.JsonOptions);
+    }
+    <div class="guide-grid" data-island="gift-guide" data-guides="@guideJson">
+        @foreach (var guide in Catalog.Guides)
+        {
+            <a class="guide-tile" href="/shop?guide=@guide.Id">
+                <svg class="icon" aria-hidden="true"><use href="#i-@guide.Icon"></use></svg>
+                <span class="guide-name">@guide.Name</span>
+                <span class="guide-desc">@guide.Description</span>
+                <span class="guide-count">@Catalog.InGuide(guide).Count() products</span>
+            </a>
+        }
+    </div>
+</section>
+
+<section class="section gift-sets" id="gift-sets" aria-labelledby="gift-sets-title">
+    <header class="section-head reveal">
+        <p class="eyebrow">Ready to give</p>
+        <h2 id="gift-sets-title">Gift Boxes &amp; Sets</h2>
+        <p class="section-lede">Wine, sweets and candles, wrapped and ready. Untie the ribbon to see what's inside.</p>
+    </header>
+
+    <div class="gift-reveal-stage" data-island="gift-reveal" data-target="gift-set-grid"></div>
+
+    <div class="product-grid gift-set-grid" id="gift-set-grid">
+        @foreach (var product in giftSets)
+        {
+            <partial name="_ProductCard" model="product" />
+        }
+    </div>
+</section>
+
+<div class="smoke-divider" aria-hidden="true">
+    <svg viewBox="172 0 64 80" focusable="false">
+        <path d="M200 78 C 180 60, 220 50, 200 32 S 186 10, 204 0" />
+        <path d="M206 78 C 226 58, 186 46, 210 28 S 222 8, 198 0" />
+    </svg>
+</div>
+
+<section class="section story" id="about" aria-labelledby="story-title">
+    <div class="story-media reveal">
+        <img src="/images/products/daisy-wax-flower-1-800.webp" width="800" height="1000" loading="lazy" decoding="async"
+             alt="A pink wax daisy in a kraft gift box with a Candle Obsession card and a 'Thank you for your order' sticker" />
+    </div>
+    <div class="story-text reveal">
+        <p class="eyebrow">Our story</p>
+        <h2 id="story-title">Every detail, made with love</h2>
+        @* TODO owner: replace this with your own story (who you are, how it started, where you pour). *@
+        <p>
+            A little candle was the beginning of a beautiful story. Candle Obsession was born in 2026, and since then
+            it has been a year full of creativity, love and countless beautiful moments.
+        </p>
+        <p>
+            Every candle, wax melt and wax flower is handmade, and every order is packed in a kraft gift box
+            with our card, because a candle is a little gift, even when it's for yourself.
+        </p>
+        <ul class="story-points">
+            <li><svg class="icon" aria-hidden="true"><use href="#i-flame"></use></svg> Handmade candles in Cyprus</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg> Gift-ready packaging &amp; personal messages</li>
+            <li><svg class="icon" aria-hidden="true"><use href="#i-heart"></use></svg> Loyalty card: collect stamps for 10% and 20% off</li>
+        </ul>
+        <a class="button button-outline" href="/candle-care">Candle care tips</a>
+    </div>
+</section>
+
+<section class="section instagram-strip" aria-labelledby="ig-title">
+    <header class="section-head reveal">
+        <p class="eyebrow">@shop.InstagramHandle</p>
+        <h2 id="ig-title">Follow the glow</h2>
+        <p class="section-lede">New scents and seasonal collections appear on Instagram first.</p>
+    </header>
+    <div class="ig-grid">
+        @foreach (var file in new[] { "teddy-bear-candle-2", "wax-flower-bouquet-1", "hello-fall-gift-crate-1", "christmas-gift-basket-1" })
+        {
+            <a class="ig-tile" href="@shop.InstagramUrl" rel="noopener" target="_blank" aria-hidden="true" tabindex="-1">
+                <img src="/images/products/@(file)-400.webp" width="400" height="500" loading="lazy" decoding="async" alt="" />
+            </a>
+        }
+    </div>
+    <p class="section-more">
+        <a class="button" href="@shop.InstagramUrl" rel="noopener" target="_blank">
+            <svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg>
+            Follow on Instagram
+        </a>
+    </p>
 </section>

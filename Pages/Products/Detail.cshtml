@@ -1,0 +1,371 @@
+@page "/products/{slug}"
+@model Candle_Obsession.Pages.Products.DetailModel
+@inject IOptions<ShopOptions> ShopOpts
+@inject SiteUrls Urls
+@{
+    var p = Model.Product;
+    var shop = ShopOpts.Value;
+    var main = p.MainImage;
+    ViewData["Title"] = p.Name;
+    ViewData["Description"] = p.ShortDescription;
+    ViewData["OgImage"] = main?.OgImage;
+    ViewData["OgType"] = "product";
+    ViewData["Canonical"] = p.Url;
+    ViewData["PageClass"] = "page-product";
+    var canBuy = p.AnyPurchasable;
+    var firstVariant = p.Variants.FirstOrDefault(v => p.IsPurchasable(v)) ?? p.Variants.FirstOrDefault();
+    var shownPrice = p.HasVariants ? p.PriceFor(firstVariant) : p.PriceEur;
+
+    string Availability(string stock) => stock switch
+    {
+        StockStatus.InStock => "https://schema.org/InStock",
+        StockStatus.LowStock => "https://schema.org/LimitedAvailability",
+        StockStatus.MadeToOrder => "https://schema.org/PreOrder",
+        StockStatus.OutOfStock => "https://schema.org/OutOfStock",
+        _ => "https://schema.org/InStoreOnly",
+    };
+
+    var ld = new Dictionary<string, object?>
+    {
+        ["@context"] = "https://schema.org",
+        ["@type"] = "Product",
+        ["name"] = p.Name,
+        ["description"] = p.Description,
+        ["sku"] = p.Sku,
+        ["brand"] = new Dictionary<string, string> { ["@type"] = "Brand", ["name"] = shop.Name },
+        ["category"] = Model.Category?.Name,
+        ["url"] = Urls.Absolute(HttpContext, p.Url),
+    };
+    // Only real product photos; an empty "image": [] is worse for rich results than leaving the key out.
+    if (p.Images.Count > 0)
+    {
+        ld["image"] = p.Images.Select(i => Urls.Absolute(HttpContext, i.Src(1200))).ToArray();
+    }
+    // Offer: the cheapest version that can be bought; a sold-out product keeps its real price, marked OutOfStock.
+    var offerVariant = p.Variants.Where(v => p.IsPurchasable(v)).MinBy(v => p.PriceFor(v)) ?? firstVariant;
+    var offerPrice = canBuy ? p.MinPurchasablePrice : (p.IsSoldOut ? p.MinPrice : null);
+    if (offerPrice is { } ldPrice)
+    {
+        ld["offers"] = new Dictionary<string, object?>
+        {
+            ["@type"] = "Offer",
+            ["price"] = ldPrice.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+            ["priceCurrency"] = "EUR",
+            ["availability"] = canBuy ? Availability(p.StockFor(offerVariant)) : "https://schema.org/OutOfStock",
+            ["itemCondition"] = "https://schema.org/NewCondition",
+            ["url"] = Urls.Absolute(HttpContext, p.Url),
+            ["seller"] = new Dictionary<string, string> { ["@type"] = "Organization", ["name"] = shop.Name },
+        };
+    }
+}
+
+@section Head {
+    <script type="application/ld+json">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(ld, ProductCatalog.JsonOptions).Replace("</", "<\\/"))</script>
+}
+
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <ol>
+        <li><a href="/">Home</a></li>
+        <li><a href="/shop">Shop</a></li>
+        @if (Model.Category is not null)
+        {
+            <li><a href="/shop?category=@Model.Category.Id">@Model.Category.Name</a></li>
+        }
+        <li aria-current="page">@p.Name</li>
+    </ol>
+</nav>
+
+<article class="product-detail" data-product-detail data-product-id="@p.Id">
+    <div class="pd-gallery">
+        @if (p.Images.Count == 0)
+        {
+            <div class="pd-main media-placeholder">
+                <svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg>
+                <span>Photo coming soon</span>
+            </div>
+        }
+        else
+        {
+            <div class="pd-slides" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Product photos">
+                @for (var i = 0; i < p.Images.Count; i++)
+                {
+                    var img = p.Images[i];
+                    var flame = img.Flame;
+                    <figure class="pd-slide product-card@(p.IsCandle && flame is not null ? " is-candle" : "")" id="photo-@(i + 1)"
+                            data-product-card data-candle="@(p.IsCandle && flame is not null ? "true" : null)"
+                            style="@(flame is null ? null : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%"))">
+                        <div class="product-media">
+                            <img src="@img.Src(1200)" srcset="@img.SrcSet" sizes="(max-width: 900px) 100vw, 50vw"
+                                 width="1200" height="1500" alt="@img.Alt"
+                                 loading="@(i == 0 ? "eager" : "lazy")" fetchpriority="@(i == 0 ? "high" : null)" decoding="async" />
+                            @if (p.IsCandle && flame is not null)
+                            {
+                                <partial name="_Flame" />
+                            }
+                        </div>
+                    </figure>
+                }
+            </div>
+            @if (p.Images.Count > 1)
+            {
+                <ul class="pd-thumbs" aria-label="Choose photo">
+                    @for (var i = 0; i < p.Images.Count; i++)
+                    {
+                        <li>
+                            <a href="#photo-@(i + 1)" data-thumb="@(i + 1)">
+                                <img src="@p.Images[i].Src(400)" width="80" height="100" alt="Photo @(i + 1) of @p.Images.Count" loading="lazy" />
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </div>
+
+    <div class="pd-info">
+        @if (Model.Category is not null)
+        {
+            <p class="eyebrow">@Model.Category.Name</p>
+        }
+        <h1 class="pd-title">@p.Name</h1>
+
+        <p class="pd-price" data-price-display>
+            @if (shownPrice is { } price && canBuy)
+            {
+                <span data-price>@Money.Eur(price)</span>
+                @if (p.CompareAtPriceEur is { } was)
+                {
+                    <s class="price-was"><span class="visually-hidden">was </span>@Money.Eur(was)</s>
+                }
+            }
+            else if (p.PriceNote is not null)
+            {
+                <span>@p.PriceNote</span>
+            }
+            else
+            {
+                <span class="price-request">Price on request</span>
+            }
+        </p>
+        <p class="pd-stock stock-@p.StockFor(firstVariant)" data-stock-display>@(p.PriceNote is not null && p.StockFor(firstVariant) == StockStatus.Enquire ? "Ask to order" : StockStatus.Label(p.StockFor(firstVariant)))</p>
+
+        <p class="pd-lede">@p.Description</p>
+
+        @if (!p.Scent.IsEmpty)
+        {
+            <section class="scent-notes" aria-labelledby="scent-title">
+                <h2 id="scent-title" class="pd-subhead">Scent notes</h2>
+                @if (p.Scent.HasPyramid)
+                {
+                    <dl class="scent-pyramid">
+                        @foreach (var (label, notes) in new[] { ("Top", p.Scent.Top), ("Heart", p.Scent.Heart), ("Base", p.Scent.Base) })
+                        {
+                            if (notes.Count == 0) { continue; }
+                            <div class="scent-tier">
+                                <dt>@label</dt>
+                                <dd>
+                                    <ul class="scent-tags">
+                                        @foreach (var note in notes)
+                                        {
+                                            <li class="scent-tag">@note</li>
+                                        }
+                                    </ul>
+                                </dd>
+                            </div>
+                        }
+                    </dl>
+                }
+                @if (p.Scent.Tags.Count > 0)
+                {
+                    <ul class="scent-tags">
+                        @{ var n = 0; }
+                        @foreach (var tag in p.Scent.Tags)
+                        {
+                            <li class="scent-tag" style="--i:@(n++)">
+                                <svg class="icon" aria-hidden="true"><use href="#i-leaf"></use></svg>@tag
+                            </li>
+                        }
+                    </ul>
+                }
+            </section>
+        }
+
+        @if (p.Contents.Count > 0)
+        {
+            <section aria-labelledby="contents-title">
+                <h2 id="contents-title" class="pd-subhead">What's inside</h2>
+                <ul class="contents-list">
+                    @foreach (var item in p.Contents)
+                    {
+                        <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>@item</li>
+                    }
+                </ul>
+            </section>
+        }
+
+        @if (canBuy)
+        {
+            <form class="pd-form" data-product-form novalidate>
+                @if (p.HasVariants)
+                {
+                    <fieldset class="variant-picker">
+                        <legend>@(p.Variants.Any(v => v.Swatch is not null) ? "Colour" : "Choose")</legend>
+                        <div class="variant-options">
+                            @foreach (var v in p.Variants)
+                            {
+                                var vBuy = p.IsPurchasable(v);
+                                <label class="variant@(v.Swatch is not null ? " has-swatch" : "")">
+                                    <input type="radio" name="variant" value="@v.Id"
+                                           data-price="@(p.PriceFor(v)?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                           data-stock="@p.StockFor(v)"
+                                           checked="@(v == firstVariant)" disabled="@(!vBuy)" required />
+                                    @if (v.Swatch is not null)
+                                    {
+                                        <span class="swatch" style="--swatch:@v.Swatch" aria-hidden="true"></span>
+                                    }
+                                    <span>@v.Name@(vBuy ? "" : p.StockFor(v) == StockStatus.OutOfStock ? " (sold out)" : " (unavailable)")</span>
+                                </label>
+                            }
+                        </div>
+                    </fieldset>
+                }
+
+                @foreach (var option in p.Options)
+                {
+                    var id = $"opt-{option.Id}";
+                    <div class="form-group">
+                        <label for="@id">@option.Label@(option.Required ? "" : " (optional)")</label>
+                        @if (option.Type == "select")
+                        {
+                            <select id="@id" name="option:@option.Id" required="@option.Required">
+                                <option value="">Please choose…</option>
+                                @foreach (var value in option.Values)
+                                {
+                                    <option>@value</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input id="@id" name="option:@option.Id" type="text" maxlength="@option.MaxLength"
+                                   placeholder="@option.Placeholder" required="@option.Required" />
+                        }
+                    </div>
+                }
+
+                <div class="pd-buy">
+                    <div class="qty" data-qty>
+                        <button type="button" class="qty-btn" data-qty-step="-1" aria-label="Decrease quantity">
+                            <svg class="icon" aria-hidden="true"><use href="#i-minus"></use></svg>
+                        </button>
+                        <label class="visually-hidden" for="qty">Quantity</label>
+                        <input id="qty" name="quantity" type="number" inputmode="numeric" min="1" max="20" value="1" />
+                        <button type="button" class="qty-btn" data-qty-step="1" aria-label="Increase quantity">
+                            <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>
+                        </button>
+                    </div>
+                    <button type="submit" class="button button-large" data-add-to-cart data-product-id="@p.Id">
+                        <svg class="icon" aria-hidden="true"><use href="#i-bag"></use></svg>
+                        <span>Add to cart</span>
+                    </button>
+                </div>
+                @if (Model.BuyNowUrl is not null)
+                {
+                    <a class="button button-outline button-block" href="@Model.BuyNowUrl" rel="noopener">Buy now</a>
+                }
+                <p class="form-message" data-form-message role="alert"></p>
+                <noscript><p class="form-message">Please enable JavaScript to use the cart, or message us on Instagram to order.</p></noscript>
+            </form>
+        }
+        else
+        {
+            <div class="pd-enquire">
+                <p>
+                    @if (p.IsSoldOut)
+                    {
+                        <text>This piece is sold out for now.</text>
+                    }
+                    else if (p.StockStatus == StockStatus.MadeToOrder)
+                    {
+                        <text>This is made to order. Tell us your colours, scents and quantity and we'll send you a quote.</text>
+                    }
+                    else
+                    {
+                        <text>This piece isn't in the online shop yet. Message us and we'll tell you the price and availability.</text>
+                    }
+                </p>
+                <div class="pd-enquire-actions">
+                    <a class="button" href="@shop.InstagramUrl" rel="noopener" target="_blank">
+                        <svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg> Message us on Instagram
+                    </a>
+                    <a class="button button-outline" href="/contact">Other ways to contact us</a>
+                </div>
+            </div>
+        }
+
+        @if (p.ContainsAlcohol)
+        {
+            <p class="notice notice-alcohol">
+                <svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>
+                Contains wine: for customers aged @shop.AlcoholMinimumAge+ only. ID may be requested on delivery.
+            </p>
+        }
+
+        @if (canBuy)
+        {
+            <p class="notice notice-gift">
+                <svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg>
+                <span><strong>Gift this:</strong> add gift wrapping and a personal message at checkout.</span>
+            </p>
+        }
+
+        @{
+            var details = new List<(string Label, string Value)>();
+            if (p.Vessel is not null) details.Add(("Vessel", p.Vessel));
+            if (p.Wax is not null) details.Add(("Wax", p.Wax));
+            if (p.Size is not null) details.Add(("Size", p.Size));
+            if (p.WeightGrams is { } g) details.Add(("Weight", $"{g} g"));
+            if (p.BurnTimeHours is { } h) details.Add(("Burn time", $"approx. {h} hours"));
+        }
+        @if (details.Count > 0)
+        {
+            <section aria-labelledby="details-title">
+                <h2 id="details-title" class="pd-subhead">Details</h2>
+                <dl class="pd-details">
+                    @foreach (var (label, value) in details)
+                    {
+                        <div><dt>@label</dt><dd>@value</dd></div>
+                    }
+                </dl>
+            </section>
+        }
+
+        <details class="pd-more">
+            <summary>Delivery &amp; returns</summary>
+            <p>Delivery across Cyprus by courier or BOX NOW locker, or local pickup. See <a href="/shipping">shipping</a> and <a href="/returns">returns</a>.</p>
+        </details>
+        @if (p.Type is "candle" or "wax-melts" or "diffuser" or "car-freshener")
+        {
+            <details class="pd-more">
+                <summary>Care &amp; safety</summary>
+                <p>Never leave a burning candle unattended, and keep it away from children, pets and anything flammable. <a href="/candle-care">Read our full care guide</a>.</p>
+            </details>
+        }
+    </div>
+</article>
+
+@if (Model.Related.Count > 0)
+{
+    <partial name="_WaxDrip" model="@("light")" />
+    <section class="section related" aria-labelledby="related-title">
+        <header class="section-head">
+            <h2 id="related-title">You may also love</h2>
+        </header>
+        <div class="product-grid product-grid-4">
+            @foreach (var r in Model.Related)
+            {
+                <partial name="_ProductCard" model="r" />
+            }
+        </div>
+    </section>
+}

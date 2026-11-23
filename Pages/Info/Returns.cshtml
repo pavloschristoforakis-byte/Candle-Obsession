@@ -1,0 +1,111 @@
+@page "/returns"
+@inject Microsoft.Extensions.Options.IOptions<Candle_Obsession.Services.ShopOptions> ShopOpts
+@{
+    ViewData["Title"] = "Returns & Refunds";
+    ViewData["Description"] = "Your 14-day right to cancel an online order from Candle Obsession, how refunds work, faulty items and the model withdrawal form.";
+
+    var shop = ShopOpts.Value;
+    var hasEmail = !string.IsNullOrWhiteSpace(shop.ContactEmail);
+}
+<article class="info-page">
+    <header class="info-hero">
+        <p class="eyebrow">CUSTOMER CARE</p>
+        <h1>Returns &amp; Refunds</h1>
+        <p class="info-updated">Last updated: <mark>[TODO: date]</mark></p>
+    </header>
+    <partial name="_DraftNotice" />
+    <div class="prose">
+        <section>
+            <h2>In short</h2>
+            <ul>
+                <li>You can change your mind and cancel an online order within <strong>14 days</strong> of receiving it, without giving a reason. You can do this online at <a href="/withdraw">/withdraw</a>.</li>
+                <li>Personalised and made-to-order items cannot be returned just because you changed your mind.</li>
+                <li>If something is faulty or not as described, you are protected for <strong>2 years</strong> from delivery.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Your 14-day right to cancel</h2>
+            <p>When you buy from us online, EU consumer law (Directive 2011/83/EU on consumer rights, applied in Cyprus by the Consumer Protection Law of 2021, Law 112(I)/2021 <mark>[TODO: verify this is still the correct Cypriot law and article numbers, including the 2026 amendments]</mark>) gives you the right to cancel the contract within 14 days without giving any reason.</p>
+            <p>The 14 days start on the day you, or someone you named (other than the courier), receive the goods. If your order arrives in several parcels, they start on the day you receive the last one.</p>
+            <p>This applies to all delivery methods, including local pickup, because the order was placed online.</p>
+        </section>
+
+        <section>
+            <h2>How to cancel</h2>
+            <p>Tell us clearly that you want to cancel, before the 14 days are over. You can:</p>
+            <ul>
+                <li>use our online <a href="/withdraw"><strong>Withdraw from contract</strong></a> function: enter your order details, check them, then confirm. The page shows a confirmation you can save straight away, or</li>
+                <li>email us at @if (hasEmail) { <a href="mailto:@shop.ContactEmail">@shop.ContactEmail</a> } else { <mark>[TODO: contact email]</mark> }, or</li>
+                <li>use our <a href="/contact">Contact</a> page, or</li>
+                <li>fill in the <a href="#withdrawal-form">model withdrawal form</a> below and send it to us (you don't have to use it).</li>
+            </ul>
+            <p>Please include your order number. It is enough to send your message before the 14 days end.</p>
+            <p><a class="button" href="/withdraw">Withdraw from contract here</a></p>
+            <p><mark>[TODO: our online withdrawal function at /withdraw is meant to meet Article 11a of Directive 2011/83/EU (added by Directive (EU) 2023/2673, applies from 19 June 2026). Verify the Cypriot transposing law, its article numbers and start date, and that the function meets its wording and confirmation rules.]</mark></p>
+        </section>
+
+        <section>
+            <h2>Sending items back</h2>
+            <ul>
+                <li>Send or bring the items back within <strong>14 days</strong> of telling us you are cancelling.</li>
+                <li>Return address or drop-off: <mark>[TODO: return address / how returns are handed over]</mark></li>
+                <li>Who pays for the return: <mark>[TODO: decide. By law the customer pays the direct cost of returning unless we agree to pay or did not tell them in advance]</mark></li>
+                <li>Please pack candles carefully. You are responsible for any loss in value caused by handling the items more than needed to see what they are like, for example if a candle has been lit or a diffuser opened.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Your refund</h2>
+            <ul>
+                <li>We refund everything you paid, <strong>including the standard delivery cost</strong>, within 14 days of hearing that you are cancelling.</li>
+                <li>If you chose a more expensive delivery option than our cheapest standard one, we only have to refund the cost of the cheapest one.</li>
+                <li>We may wait to refund until we have the items back, or until you show us proof that you sent them, whichever comes first.</li>
+                <li>We refund using the same payment method you used, unless you agree to something else. You won't pay any fees for the refund.</li>
+                <li>For cash on delivery orders: <mark>[TODO: how cash payments are refunded, e.g. bank transfer or Revolut]</mark></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Items you cannot return for a change of mind</h2>
+            <p>The law makes some exceptions to the 14-day right. For our shop these are:</p>
+            <ul>
+                <li><strong>Personalised or made-to-order items</strong>: goods made to your specifications or clearly personalised, such as custom wedding or christening favours (bomboniere), candles with names, dates or custom labels, or a scent, colour or design made specially for you (Article 16(c) of Directive 2011/83/EU).</li>
+                <li><strong>Sealed items opened for hygiene or health reasons</strong>, only if a product is sold sealed for that reason and the seal is broken after delivery (Article 16(e)). <mark>[TODO: check whether any product actually falls under this; delete if not]</mark></li>
+            </ul>
+            <p>Wine gift boxes: there is no general legal exception for alcohol in the EU rules for normal retail sales, so we expect the usual 14-day right to apply to unopened gift boxes. <mark>[TODO: verify with a lawyer, and confirm any licensing rules for returned alcohol]</mark></p>
+            <p>These exceptions only cover changing your mind. If an item is faulty, you are always protected (see below).</p>
+        </section>
+
+        <section>
+            <h2>Faulty or wrong items: your 2-year legal guarantee</h2>
+            <p>Everything we sell must match its description and be fit for normal use. Under EU law (Directive (EU) 2019/771), applied in Cyprus by the Certain Aspects Concerning Contracts for the Sale of Goods Law of 2021 (Law 154(I)/2021) <mark>[TODO: verify law name and number on cylaw.org]</mark>, we are responsible for any lack of conformity that exists when you receive the item and appears within <strong>2 years</strong> of delivery.</p>
+            <p>If something is wrong, contact us with your order number and photos. You can ask for a repair or replacement, and if that is not possible or doesn't happen within a reasonable time, a price reduction or a full refund. We pay any return costs for faulty items.</p>
+            <p>Please tell us soon after you notice the problem. <mark>[TODO: verify whether Cypriot law requires the consumer to notify within 2 months of discovering the fault]</mark></p>
+            <p>Handmade items vary a little in colour, shape and surface (for example the white "frosting" that natural waxes can show). Normal handmade variation is not a fault. See our <a href="/terms">Terms of Sale</a> and <a href="/candle-care">Candle Care</a> page.</p>
+        </section>
+
+        <section id="withdrawal-form">
+            <h2>Model withdrawal form</h2>
+            <p><em>(Complete and return this form only if you wish to withdraw from the contract.)</em></p>
+            <ul>
+                <li>To: @Or(shop.LegalName, "legal name"), @Or(shop.TradingAddress, "geographical address"), @Or(shop.ContactEmail, "email address")</li>
+                <li>I/We (*) hereby give notice that I/We (*) withdraw from my/our (*) contract of sale of the following goods (*)/for the provision of the following service (*):</li>
+                <li>Ordered on (*)/received on (*):</li>
+                <li>Name of consumer(s):</li>
+                <li>Address of consumer(s):</li>
+                <li>Signature of consumer(s) (only if this form is notified on paper):</li>
+                <li>Date:</li>
+            </ul>
+            <p><em>(*) Delete as appropriate.</em></p>
+            <p><em>Source: Annex I(B) to Directive 2011/83/EU.</em></p>
+        </section>
+    </div>
+</article>
+
+@functions {
+    private static Microsoft.AspNetCore.Html.IHtmlContent Or(string? value, string todo) =>
+        string.IsNullOrWhiteSpace(value)
+            ? new Microsoft.AspNetCore.Html.HtmlString("<mark>[TODO: " + System.Net.WebUtility.HtmlEncode(todo) + "]</mark>")
+            : new Microsoft.AspNetCore.Html.HtmlString(System.Net.WebUtility.HtmlEncode(value));
+}

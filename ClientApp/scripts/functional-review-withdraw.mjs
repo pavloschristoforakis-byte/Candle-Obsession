@@ -1,0 +1,22 @@
+import { chromium } from 'playwright';
+const B = 'http://localhost:5199';
+const browser = await chromium.launch();
+const page = await browser.newPage();
+page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
+await page.goto(B + '/withdraw?reference=Tor9hKN11HSVs4aB-0m1Ew');
+console.log('prefilled ref:', await page.inputValue('#Input_OrderReference'));
+// empty submit → validation
+await page.click('form button[type=submit]');
+await page.waitForLoadState();
+console.log('step after empty submit:', await page.locator('h2').first().innerText(), '| errors:', await page.locator('.field-error').allInnerTexts());
+await page.fill('#Input_Name', 'Review Bot');
+await page.fill('#Input_Email', 'REVIEW@example.com');
+await page.fill('#Input_Details', 'functional review test – <b>not real</b>');
+await page.click('form button[type=submit]');
+await page.waitForLoadState();
+console.log('step 2 heading:', await page.locator('.prose h2').first().innerText());
+console.log('review dl:', (await page.locator('.pd-details').innerText()).replace(/\n/g, ' | '));
+await page.click('form button[type=submit]');
+await page.waitForLoadState();
+console.log('done:', (await page.locator('.prose').innerText()).replace(/\n+/g, ' | ').slice(0, 300));
+await browser.close();

@@ -1,0 +1,27 @@
+@page "/admin/login"
+@model Candle_Obsession.Pages.Admin.LoginModel
+@{
+    ViewData["Title"] = "Owner login";
+    ViewData["NoIndex"] = true;
+}
+<section class="section admin narrow">
+    <h1>Owner login</h1>
+    @if (!Model.Enabled)
+    {
+        <p class="notice">The admin area is switched off. Set the <code>Admin__Password</code> environment variable (or <code>Admin:Password</code> in settings) to turn it on.</p>
+    }
+    else
+    {
+        <form method="post" class="stack">
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input id="password" type="password" name="Password" autocomplete="current-password" required />
+            </div>
+            @if (Model.Error is not null)
+            {
+                <p class="form-message" role="alert">@Model.Error</p>
+            }
+            <button class="button" type="submit">Log in</button>
+        </form>
+    }
+</section>

@@ -1,0 +1,22 @@
+// After handing off to an external payment page, pressing Back: is the checkout button still usable?
+import { chromium } from 'playwright';
+const B = 'http://localhost:5199';
+const browser = await chromium.launch();
+const ctx = await browser.newContext();
+const page = await ctx.newPage();
+await page.route('**/Checkout?handler=PlaceOrder', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, orderId: 0, reference: 'x', total: 1, redirectUrl: B + '/terms' }) }));
+await page.route('https://pay.test/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<h1>PAY</h1>' }));
+await page.goto(B + '/shop');
+await page.evaluate(() => localStorage.setItem('co.cart.v2', JSON.stringify([{ key: 'apple-pie||', productId: 'apple-pie', quantity: 1 }])));
+await page.goto(B + '/checkout');
+await page.fill('#firstName', 'A'); await page.fill('#lastName', 'B'); await page.fill('#email', 'a@example.com'); await page.fill('#phone', '1');
+await page.fill('#address', 'x'); await page.fill('#city', 'y'); await page.fill('#postalCode', '1');
+await page.evaluate(() => { document.querySelector('input[name=acceptTerms]').checked = true; });
+await page.click('[data-place-order]');
+await page.waitForTimeout(2500); console.log('after submit url', page.url());
+await page.goBack();
+await page.waitForTimeout(800);
+console.log('after Back: url', page.url(), '| button disabled:', await page.locator('[data-place-order]').isDisabled(), '| label:', await page.locator('[data-place-order] span').innerText());
+const cc = (await (await page.request.get(B + '/checkout')).headers())['cache-control'];
+console.log('checkout Cache-Control:', cc);
+await browser.close();

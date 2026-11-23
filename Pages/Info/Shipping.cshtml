@@ -1,0 +1,174 @@
+@page "/shipping"
+@inject Microsoft.Extensions.Options.IOptions<Candle_Obsession.Services.ShopOptions> ShopOpts
+@{
+    ViewData["Title"] = "Shipping & Delivery";
+    ViewData["Description"] = "How Candle Obsession delivers handmade candles in Cyprus: courier, BOX NOW lockers, local pickup, prices and delivery times.";
+
+    var shop = ShopOpts.Value;
+    var available = shop.DeliveryMethods.Where(m => m.IsAvailable).ToList();
+    var euMethods = available.Where(m => m.EffectiveCountries.Any(c => !string.Equals(c, "Cyprus", StringComparison.OrdinalIgnoreCase))).ToList();
+    var boxNow = available.FirstOrDefault(m => m.Requires == "locker");
+    var pickup = available.FirstOrDefault(m => m.Requires == "none");
+}
+<article class="info-page">
+    <header class="info-hero">
+        <p class="eyebrow">CUSTOMER CARE</p>
+        <h1>Shipping &amp; Delivery</h1>
+        <p class="info-updated">Last updated: <mark>[TODO: date]</mark></p>
+    </header>
+    <partial name="_DraftNotice" />
+    <div class="prose">
+        <section>
+            <h2>Delivery options and prices</h2>
+            <p>Every candle is poured by hand, so we prepare each order with care. You choose how you want to receive it at checkout.</p>
+            @if (available.Count == 0)
+            {
+                <p><mark>[TODO: no delivery methods are configured yet]</mark></p>
+            }
+            else
+            {
+                <table>
+                    <thead>
+                        <tr><th>Option</th><th>What it means</th><th>Price</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in available)
+                        {
+                            <tr>
+                                <td><strong>@m.Name</strong></td>
+                                <td>@m.Description</td>
+                                <td>@Price(m.PriceEur!.Value)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <p>The delivery price is shown again in your basket and at checkout before you pay.</p>
+            }
+            <p>Free delivery threshold: <mark>[TODO: is there a minimum order for free delivery? If not, delete this line]</mark></p>
+        </section>
+
+        <section>
+            <h2>How long it takes</h2>
+            <p>Our candles are handmade, so please allow a little time for us to get your order ready.</p>
+            <ul>
+                <li>Preparing your order: <mark>[TODO: e.g. 1–3 working days for in-stock items]</mark></li>
+                <li>Made-to-order and personalised items: <mark>[TODO: typical lead time]</mark></li>
+                <li>Courier delivery after dispatch: <mark>[TODO: typical ACS delivery time in Cyprus]</mark></li>
+                <li>BOX NOW locker delivery after dispatch: <mark>[TODO: typical BOX NOW delivery time]</mark></li>
+            </ul>
+            <p>These are estimates, not guarantees. If something delays your order we will let you know. By law we must deliver within 30 days of your order unless we agree another date with you. If we miss it, you can give us a reasonable extra deadline, and if we miss that too you can cancel and get a full refund.</p>
+        </section>
+
+        @if (pickup is not null)
+        {
+            <section>
+                <h2>Local pickup</h2>
+                <p>Choose <strong>@pickup.Name</strong> at checkout and we will message you to arrange a time to collect your order.</p>
+                <ul>
+                    <li>Pickup location: <mark>[TODO: pickup area/address, or say it is arranged per order]</mark></li>
+                    <li>Pickup times: <mark>[TODO: usual days and hours]</mark></li>
+                    <li>How long we hold your order: <mark>[TODO: e.g. 14 days, and what happens after]</mark></li>
+                </ul>
+                <p>Orders collected in person are still online orders, so your rights described on our <a href="/returns">Returns &amp; Refunds</a> page still apply.</p>
+            </section>
+        }
+
+        @if (boxNow is not null)
+        {
+            <section>
+                <h2>BOX NOW parcel lockers</h2>
+                <ul>
+                    <li>You choose your locker at checkout.</li>
+                    <li>When your parcel arrives, BOX NOW sends you a message with a code to open the locker. Please make sure your mobile number and email are correct.</li>
+                    <li>Collection window: <mark>[TODO: how many days the parcel stays in the locker before it is returned]</mark></li>
+                    @if (boxNow.DisallowedPaymentMethods.Count > 0)
+                    {
+                        <li>Not available with locker delivery: @PaymentNames(shop, boxNow.DisallowedPaymentMethods).</li>
+                    }
+                    <li>Lockers can get hot in summer. Please collect your parcel as soon as you can (see <a href="#heat">Hot weather</a> below).</li>
+                </ul>
+            </section>
+        }
+
+        <section>
+            <h2>Shipping outside Cyprus</h2>
+            @if (euMethods.Count > 0)
+            {
+                <p>We also deliver to these countries:</p>
+                <ul>
+                    @foreach (var m in euMethods)
+                    {
+                        <li><strong>@m.Name</strong> (@Price(m.PriceEur!.Value)): @string.Join(", ", m.EffectiveCountries.Where(c => !string.Equals(c, "Cyprus", StringComparison.OrdinalIgnoreCase)))</li>
+                    }
+                </ul>
+                <p>Delivery times to other EU countries: <mark>[TODO: typical EU delivery time]</mark></p>
+            }
+            else
+            {
+                <p>Shipping to other EU countries is <strong>not yet available</strong>. We hope to offer it soon. Follow us on <a href="@shop.InstagramUrl">Instagram</a> for news.</p>
+            }
+        </section>
+
+        <section id="heat">
+            <h2>Hot weather</h2>
+            <p>Cyprus summers are hot. Candle wax can soften, sweat or change shape in a hot car, mailbox or locker. This does not affect how the candle burns once it cools down, but it can spoil the look.</p>
+            <ul>
+                <li>Please collect lockers and parcels promptly and bring them inside.</li>
+                <li>Let a softened candle rest at room temperature, upright, before lighting it.</li>
+                <li>In very hot weeks we may hold dispatch for a day or two. <mark>[TODO: confirm this policy]</mark></li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Damaged, missing or lost parcels</h2>
+            <p>We pack every order carefully, but accidents happen.</p>
+            <ol>
+                <li>If your order arrives damaged, please take photos of the parcel and the items, and keep the packaging.</li>
+                <li>Contact us as soon as possible (ideally within <mark>[TODO: e.g. 48 hours]</mark>) via our <a href="/contact">Contact</a> page.</li>
+                <li>We will send a replacement or give you a refund. You will not be left out of pocket for damage that happened before you received the parcel.</li>
+            </ol>
+            <p>If your parcel has not arrived within the expected time, tell us and we will check with the courier. The risk of loss stays with us until you (or someone you named) receive the parcel.</p>
+        </section>
+
+        <section>
+            <h2>Gift orders and gift messages</h2>
+            @if (shop.GiftWrap.Enabled)
+            {
+                @if (shop.GiftWrap.PriceEur is decimal wrapPrice)
+                {
+                    <p>You can add gift wrapping at checkout@(wrapPrice == 0m ? " free of charge" : " for " + Price(wrapPrice)).</p>
+                }
+                else
+                {
+                    <p>You can add gift wrapping at checkout. <mark>[TODO: confirm gift wrap price]</mark></p>
+                }
+                <p>You can also add a gift message of up to @shop.GiftWrap.MaxMessageLength characters. We will include it with the order.</p>
+            }
+            else
+            {
+                <p>You can add a gift message at checkout and we will include it with the order.</p>
+            }
+            <p>You can send an order straight to someone else by entering their name and address as the delivery address.</p>
+            <p>We do not print prices on anything inside the parcel. <mark>[TODO: confirm no invoice or price slip is put inside gift parcels]</mark></p>
+        </section>
+
+        <section>
+            <h2>Questions?</h2>
+            <p>Have a look at our <a href="/returns">Returns &amp; Refunds</a> page, or <a href="/contact">get in touch</a>. We are happy to help.</p>
+        </section>
+    </div>
+</article>
+
+@functions {
+    private static Microsoft.AspNetCore.Html.IHtmlContent Or(string? value, string todo) =>
+        string.IsNullOrWhiteSpace(value)
+            ? new Microsoft.AspNetCore.Html.HtmlString("<mark>[TODO: " + System.Net.WebUtility.HtmlEncode(todo) + "]</mark>")
+            : new Microsoft.AspNetCore.Html.HtmlString(System.Net.WebUtility.HtmlEncode(value));
+
+    private static string Price(decimal price) =>
+        price == 0m ? "Free" : "€" + price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+
+    private static string PaymentNames(Candle_Obsession.Services.ShopOptions shop, IEnumerable<string> ids) =>
+        string.Join(", ", ids.Select(id =>
+            shop.PaymentMethods.FirstOrDefault(p => string.Equals(p.Id, id, StringComparison.OrdinalIgnoreCase))?.Name ?? id));
+}

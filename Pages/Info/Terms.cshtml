@@ -1,0 +1,178 @@
+@page "/terms"
+@inject Microsoft.Extensions.Options.IOptions<Candle_Obsession.Services.ShopOptions> ShopOpts
+@{
+    ViewData["Title"] = "Terms of Sale";
+    ViewData["Description"] = "The terms that apply when you buy handmade candles and gifts from Candle Obsession online: prices, payment, delivery, cancellations and complaints.";
+
+    var shop = ShopOpts.Value;
+    var payments = shop.PaymentMethods.Where(p => p.Enabled).ToList();
+    var deliveries = shop.DeliveryMethods.Where(m => m.IsAvailable).ToList();
+}
+<article class="info-page">
+    <header class="info-hero">
+        <p class="eyebrow">CUSTOMER CARE</p>
+        <h1>Terms of Sale</h1>
+        <p class="info-updated">Last updated: <mark>[TODO: date]</mark></p>
+    </header>
+    <partial name="_DraftNotice" />
+    <div class="prose">
+        <section>
+            <h2>Who you are buying from</h2>
+            <p>This shop is run by:</p>
+            <address>
+                <strong>@Or(shop.LegalName, "legal name of the business owner or company")</strong>, trading as @shop.Name<br />
+                @Or(shop.TradingAddress, "business address")<br />
+                Registration no.: @Or(shop.RegistrationNumber, "registration number")<br />
+                VAT no.: @Or(shop.VatNumber, "VAT number, or remove this line if not VAT-registered")<br />
+                Email: @Or(shop.ContactEmail, "contact email")<br />
+                Phone: @Or(shop.ContactPhone, "contact phone")
+            </address>
+            <p>These terms apply to orders placed on this website by consumers. Please read them before you order. They do not affect your legal rights as a consumer.</p>
+        </section>
+
+        <section>
+            <h2>How your order works</h2>
+            <ol>
+                <li>You choose your items, delivery and payment method, and press the order button at checkout.</li>
+                <li>We send you an email confirming that we have received your order. <mark>[TODO: confirm this email is sent automatically]</mark></li>
+                <li>The contract between us is formed when we confirm your order. <mark>[TODO: decide: at the confirmation email, or when payment is received for Revolut orders]</mark></li>
+            </ol>
+            <p>If we cannot accept your order (for example an item is out of stock or a price was clearly wrong), we will tell you and refund anything you have paid.</p>
+            <p>These terms and your order confirmation are in English. <mark>[TODO: verify whether Cypriot law (including the 2026 amendments to Law 112(I)/2021) requires a Greek version]</mark></p>
+        </section>
+
+        <section>
+            <h2>Prices</h2>
+            <p>All prices are in euro (€).</p>
+            @if (shop.PricesIncludeVat is true)
+            {
+                <p>All prices include VAT.</p>
+            }
+            else if (shop.PricesIncludeVat is false)
+            {
+                <p>We are not registered for VAT, so no VAT is charged on our prices.</p>
+            }
+            else
+            {
+                <p><mark>[TODO: VAT wording: owner/accountant to decide whether prices include VAT or VAT is not charged]</mark></p>
+            }
+            <p>Delivery costs are shown separately at checkout before you pay. See <a href="/shipping">Shipping &amp; Delivery</a>.</p>
+            @if (shop.GiftWrap.Enabled)
+            {
+                @if (shop.GiftWrap.PriceEur is decimal wrapPrice)
+                {
+                    <p>Gift wrapping, if you choose it, @(wrapPrice == 0m ? "is free of charge" : "costs " + Price(wrapPrice)).</p>
+                }
+                else
+                {
+                    <p>Gift wrapping is available at checkout. <mark>[TODO: confirm gift wrap price]</mark></p>
+                }
+            }
+        </section>
+
+        <section>
+            <h2>Payment</h2>
+            @if (payments.Count == 0)
+            {
+                <p><mark>[TODO: no payment methods are configured]</mark></p>
+            }
+            else
+            {
+                <p>You can pay with:</p>
+                <ul>
+                    @foreach (var p in payments)
+                    {
+                        var notWith = deliveries.Where(d => d.DisallowedPaymentMethods.Contains(p.Id, StringComparer.OrdinalIgnoreCase)).Select(d => d.Name).ToList();
+                        <li>
+                            <strong>@p.Name</strong>: @p.Description.
+                            @if (p.Id == "card")
+                            {
+                                <text>Card payments are processed by our payment provider, <mark>[TODO: provider name]</mark>. We never see or store your full card details.</text>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(p.Instructions))
+                            {
+                                <text> @p.Instructions</text>
+                            }
+                            @if (notWith.Count > 0)
+                            {
+                                <text> Not available with: @string.Join(", ", notWith).</text>
+                            }
+                        </li>
+                    }
+                </ul>
+                <p>For Revolut orders, we start preparing your order once payment is received. <mark>[TODO: confirm, and say how long the customer has to pay before the order is cancelled]</mark></p>
+            }
+        </section>
+
+        <section>
+            <h2>Delivery</h2>
+            <p>Delivery options, prices and times are explained on our <a href="/shipping">Shipping &amp; Delivery</a> page. The items are your responsibility once you (or someone you named) receive them.</p>
+        </section>
+
+        <section>
+            <h2>Cancelling and returns</h2>
+            <p>You can cancel most online orders within 14 days of receiving them, without giving a reason. Personalised and made-to-order items are an exception. All the details, and the model withdrawal form, are on our <a href="/returns">Returns &amp; Refunds</a> page.</p>
+        </section>
+
+        <section>
+            <h2>Handmade means unique</h2>
+            <p>Every candle is made by hand. Colour, shape, surface texture and the strength of the scent can vary slightly from the photos and from one candle to the next. Natural waxes can also show a white "frosting" or small air marks. This is part of handmade character and is not a fault.</p>
+            <p>Screens show colours differently, so the colour you see may differ a little from the real product.</p>
+        </section>
+
+        <section>
+            <h2>Wine gift boxes</h2>
+            <p>Some gift boxes contain wine. You must be at least <strong>@shop.AlcoholMinimumAge years old</strong> to buy them. By ordering one you confirm that you, and the person receiving it, are @shop.AlcoholMinimumAge or older.</p>
+            <p>We or the courier may ask to see ID on delivery or pickup. If the person receiving the order cannot show they are old enough, we will not hand over the wine.</p>
+            <p><mark>[TODO owner: check whether selling alcohol online in Cyprus needs a licence, and verify the legal minimum age for buying alcohol in Cyprus. Do not sell wine boxes until this is confirmed.]</mark></p>
+            <p>Please drink responsibly.</p>
+        </section>
+
+        <section>
+            <h2>Safe use</h2>
+            <p>Candles, wax melts, reed diffusers and car fresheners must be used safely. Please read the label on each product and our <a href="/candle-care">Candle Care &amp; Safety</a> guide before use.</p>
+        </section>
+
+        <section>
+            <h2>Our responsibility to you</h2>
+            <ul>
+                <li>If a product is faulty or not as described, you have the legal rights explained on our <a href="/returns">Returns &amp; Refunds</a> page.</li>
+                <li>We are not responsible for damage caused by using a product against its safety instructions, or for losses we could not reasonably have foreseen.</li>
+                <li>Nothing in these terms limits our liability where the law does not allow it, for example for death or personal injury caused by our negligence, for fraud, or for your statutory consumer rights.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Complaints and disputes</h2>
+            <p>If something goes wrong, please <a href="/contact">contact us</a> first. We will do our best to sort it out quickly and fairly.</p>
+            <p>If we cannot agree, you can also contact:</p>
+            <ul>
+                <li><strong>The Consumer Protection Service</strong> of the Ministry of Energy, Commerce and Industry of Cyprus, which enforces consumer law. <mark>[TODO: verify current ministry name and add the official complaints link]</mark></li>
+                <li><strong>An approved alternative dispute resolution (ADR) body</strong> in Cyprus, such as the Cyprus Consumer Center for Alternative Dispute Resolution (<a href="https://www.adrcyprus.com/">adrcyprus.com</a>). The European Commission keeps a <a href="https://consumer-redress.ec.europa.eu/dispute-resolution-bodies_en">list of ADR bodies</a>. <mark>[TODO owner: decide whether we commit to using a particular ADR body; if so, name it here]</mark></li>
+                <li><strong>The European Consumer Centre Cyprus</strong>, if you live in another EU country. <mark>[TODO: add official link]</mark></li>
+            </ul>
+            @* The EU Online Dispute Resolution (ODR) platform was discontinued on 20 July 2025 (Regulation (EU) 2024/3228), so no ODR link is needed or given. *@
+            <p>You can also take your claim to the Cypriot courts.</p>
+        </section>
+
+        <section>
+            <h2>Governing law</h2>
+            <p>These terms are governed by the law of the Republic of Cyprus. If you live in another EU country, you also keep the protection of the mandatory consumer laws of your country, and you can bring a claim in your local courts.</p>
+        </section>
+
+        <section>
+            <h2>Changes to these terms</h2>
+            <p>We may update these terms from time to time. The terms that apply to your order are the ones shown here when you placed it.</p>
+        </section>
+    </div>
+</article>
+
+@functions {
+    private static Microsoft.AspNetCore.Html.IHtmlContent Or(string? value, string todo) =>
+        string.IsNullOrWhiteSpace(value)
+            ? new Microsoft.AspNetCore.Html.HtmlString("<mark>[TODO: " + System.Net.WebUtility.HtmlEncode(todo) + "]</mark>")
+            : new Microsoft.AspNetCore.Html.HtmlString(System.Net.WebUtility.HtmlEncode(value));
+
+    private static string Price(decimal price) =>
+        price == 0m ? "Free" : "€" + price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+}
