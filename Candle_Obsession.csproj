@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <ClientAppDir>$(MSBuildProjectDirectory)\ClientApp\</ClientAppDir>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,5 +18,25 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- The product catalogue is read at runtime from Data/products.json. -->
+    <Content Update="Data\products.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <!-- Front-end source is built by Vite into wwwroot/dist; keep it out of the .NET build. -->
+    <Compile Remove="ClientApp\**" />
+    <Content Remove="ClientApp\**" />
+    <None Remove="ClientApp\**" />
+    <None Include="ClientApp\src\**" Exclude="ClientApp\node_modules\**" />
+  </ItemGroup>
+
+  <!-- Builds the front-end (ClientApp → wwwroot/dist) if it hasn't been built yet.
+       Run `npm run build` in ClientApp yourself after changing front-end code (or `npm run watch`).
+       The Dockerfile always builds it. Skip with: dotnet build -p:SkipClientBuild=true -->
+  <Target Name="BuildClientApp" BeforeTargets="BeforeBuild"
+          Condition="'$(SkipClientBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)\wwwroot\dist\app.js')">
+    <Message Importance="high" Text="Building front-end (ClientApp)…" />
+    <Exec Command="npm ci" WorkingDirectory="$(ClientAppDir)" Condition="!Exists('$(ClientAppDir)node_modules')" />
+    <Exec Command="npm run build" WorkingDirectory="$(ClientAppDir)" />
+  </Target>
 
 </Project>

@@ -1,0 +1,63 @@
+@page "/shop"
+@model ShopModel
+@{
+    var heading = Model.ActiveGuide?.Name ?? Model.ActiveCategory?.Name ?? "All products";
+    ViewData["Title"] = Model.ActiveGuide is null && Model.ActiveCategory is null ? "Shop" : heading;
+    ViewData["Description"] = Model.ActiveGuide?.Description ?? Model.ActiveCategory?.Description
+                              ?? "Shop handmade scented candles, shaped candles, wax melts, home fragrance and gift boxes from Candle Obsession, Cyprus.";
+    ViewData["Canonical"] = Model.ActiveGuide is not null ? $"/shop?guide={Model.ActiveGuide.Id}"
+                          : Model.ActiveCategory is not null ? $"/shop?category={Model.ActiveCategory.Id}" : "/shop";
+    ViewData["CardHeading"] = "h2";
+    string ChipClass(bool active) => active ? "chip is-active" : "chip";
+}
+
+<section class="section shop" aria-labelledby="shop-title">
+    <header class="section-head">
+        <p class="eyebrow">@(Model.ActiveGuide is not null ? "Gift guide" : "Shop")</p>
+        <h1 id="shop-title">@heading</h1>
+        <p class="section-lede">
+            @(Model.ActiveGuide?.Description ?? Model.ActiveCategory?.Description ?? "Handmade candles, wax melts and gifts, delivered across Cyprus.")
+        </p>
+    </header>
+
+    <nav class="filter-bar" aria-label="Filter products">
+        <ul class="chip-row" aria-label="Categories">
+            <li><a class="@ChipClass(Model.ActiveCategory is null && Model.ActiveGuide is null)" href="/shop"
+                   aria-current="@(Model.ActiveCategory is null && Model.ActiveGuide is null ? "page" : null)">All</a></li>
+            @foreach (var c in Model.Catalog.Categories)
+            {
+                var active = Model.ActiveCategory?.Id == c.Id && Model.ActiveGuide is null;
+                <li><a class="@ChipClass(active)" href="/shop?category=@c.Id" aria-current="@(active ? "page" : null)">@c.Name</a></li>
+            }
+        </ul>
+        <ul class="chip-row chip-row-guides" aria-label="Gift guide">
+            @foreach (var g in Model.Catalog.Guides)
+            {
+                var active = Model.ActiveGuide?.Id == g.Id;
+                <li><a class="@ChipClass(active) chip-guide" href="/shop?guide=@g.Id" aria-current="@(active ? "page" : null)">
+                    <svg class="icon" aria-hidden="true"><use href="#i-@g.Icon"></use></svg>@g.Name
+                </a></li>
+            }
+        </ul>
+    </nav>
+
+    <p class="result-count" role="status">@Model.Products.Count @(Model.Products.Count == 1 ? "product" : "products")</p>
+
+    @if (Model.Products.Count == 0)
+    {
+        <div class="empty-state">
+            <svg class="icon" aria-hidden="true"><use href="#i-sparkles"></use></svg>
+            <p>Nothing here yet. New pieces arrive on Instagram first.</p>
+            <a class="button" href="/shop">See all products</a>
+        </div>
+    }
+    else
+    {
+        <div class="product-grid">
+            @foreach (var product in Model.Products)
+            {
+                <partial name="_ProductCard" model="product" />
+            }
+        </div>
+    }
+</section>

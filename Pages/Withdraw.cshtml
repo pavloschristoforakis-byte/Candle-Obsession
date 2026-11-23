@@ -1,0 +1,91 @@
+@page "/withdraw"
+@model WithdrawModel
+@{
+    ViewData["Title"] = "Withdraw from contract";
+    ViewData["Description"] = "Use this form to withdraw from your online purchase within 14 days, as provided by EU consumer law.";
+}
+
+<article class="info-page">
+    <header class="info-hero">
+        <p class="eyebrow">Customer care</p>
+        <h1>Withdraw from contract</h1>
+    </header>
+    <partial name="_DraftNotice" />
+
+    <div class="prose">
+        @if (Model.Step == "done")
+        {
+            <section class="notice notice-success" role="status">
+                <svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg>
+                <div>
+                    <h2>We've received your withdrawal request</h2>
+                    <p>
+                        Received on @DateTime.UtcNow.ToString("d MMMM yyyy, HH:mm") (UTC).
+                        @if (Model.EmailSent)
+                        {
+                            <text>A confirmation has been emailed to <strong>@Model.Input.Email</strong>.</text>
+                        }
+                        else
+                        {
+                            <text>Please keep a screenshot of this page as your confirmation.</text>
+                        }
+                    </p>
+                    <p>We'll contact you with return instructions. See <a href="/returns">Returns &amp; refunds</a> for details.</p>
+                </div>
+            </section>
+        }
+        else if (Model.Step == "confirm")
+        {
+            <section>
+                <h2>Step 2 of 2: confirm your withdrawal</h2>
+                <dl class="pd-details">
+                    <div><dt>Name</dt><dd>@Model.Input.Name</dd></div>
+                    <div><dt>Email</dt><dd>@Model.Input.Email</dd></div>
+                    <div><dt>Order reference</dt><dd>@(string.IsNullOrWhiteSpace(Model.Input.OrderReference) ? "Not given" : Model.Input.OrderReference)</dd></div>
+                    <div><dt>Items</dt><dd>@(string.IsNullOrWhiteSpace(Model.Input.Details) ? "Whole order" : Model.Input.Details)</dd></div>
+                </dl>
+                <form method="post" asp-page-handler="Confirm" class="stack">
+                    <input type="hidden" asp-for="Input.Name" />
+                    <input type="hidden" asp-for="Input.Email" />
+                    <input type="hidden" asp-for="Input.OrderReference" />
+                    <input type="hidden" asp-for="Input.Details" />
+                    <button type="submit" class="button">Confirm withdrawal</button>
+                    <a class="text-link" href="/withdraw">Change details</a>
+                </form>
+            </section>
+        }
+        else
+        {
+            <section>
+                <p>
+                    You can withdraw from an online purchase within 14 days of receiving your order, without giving a reason.
+                    Fill in the form below and confirm on the next step. Exceptions (such as personalised items) are explained in
+                    our <a href="/returns">Returns &amp; refunds</a> policy.
+                </p>
+                <h2>Step 1 of 2: your details</h2>
+                <form method="post" asp-page-handler="Review" class="stack" novalidate>
+                    <div asp-validation-summary="ModelOnly" class="form-message"></div>
+                    <div class="form-group">
+                        <label asp-for="Input.Name"></label>
+                        <input asp-for="Input.Name" autocomplete="name" />
+                        <span asp-validation-for="Input.Name" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Input.Email"></label>
+                        <input asp-for="Input.Email" autocomplete="email" />
+                        <span asp-validation-for="Input.Email" class="field-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Input.OrderReference"></label>
+                        <input asp-for="Input.OrderReference" />
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Input.Details"></label>
+                        <textarea asp-for="Input.Details" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="button">Withdraw from contract here</button>
+                </form>
+            </section>
+        }
+    </div>
+</article>

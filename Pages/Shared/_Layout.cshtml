@@ -1,61 +1,158 @@
-﻿
+﻿@inject IOptions<ShopOptions> ShopOpts
+@inject ProductCatalog Catalog
+@inject SiteUrls Urls
+@{
+    var shop = ShopOpts.Value;
+    var title = ViewData["Title"] as string;
+    var fullTitle = string.IsNullOrEmpty(title) || title == shop.Name ? $"{shop.Name}: Handmade candles in Cyprus" : $"{title} | {shop.Name}";
+    var description = ViewData["Description"] as string
+        ?? "Handmade scented candles, wax melts and gift boxes from Cyprus. Hand-poured with love by Candle Obsession.";
+    var canonical = Urls.Absolute(Context, (ViewData["Canonical"] as string) ?? Context.Request.Path.Value ?? "/");
+    var ogImage = Urls.Absolute(Context, (ViewData["OgImage"] as string) ?? "/images/brand/og-default.jpg");
+    var announcement = shop.Announcement;
+    var pageClass = ViewData["PageClass"] as string;
+}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="no-js">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@fullTitle</title>
+    <meta name="description" content="@description" />
+    <link rel="canonical" href="@canonical" />
+    @if (ViewData["NoIndex"] is true)
+    {
+        <meta name="robots" content="noindex" />
+    }
 
-    <title>@ViewData["Title"] | Candle Obsession</title>
+    <meta property="og:site_name" content="@shop.Name" />
+    <meta property="og:type" content="@(ViewData["OgType"] as string ?? "website")" />
+    <meta property="og:title" content="@(title ?? shop.Name)" />
+    <meta property="og:description" content="@description" />
+    <meta property="og:url" content="@canonical" />
+    <meta property="og:image" content="@ogImage" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_GB" />
+    <meta name="twitter:card" content="summary_large_image" />
 
+    <meta name="theme-color" content="#45382f" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <link rel="preload" href="/fonts/playfair-display-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/jost-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/dist/app.css" asp-append-version="true" />
+    <script src="~/js/boot.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Head", required: false)
 </head>
 
-<body>
+<body class="@pageClass">
+    <partial name="_Icons" />
+    <a class="skip-link" href="#main">Skip to content</a>
 
-    <header class="main-header">
+    @if (announcement.IsVisible(DateTime.UtcNow))
+    {
+        <div class="announcement" role="region" aria-label="Announcement">
+            <svg class="icon" aria-hidden="true"><use href="#i-sparkles"></use></svg>
+            <span>@announcement.Text</span>
+            @if (!string.IsNullOrWhiteSpace(announcement.LinkUrl))
+            {
+                <a href="@announcement.LinkUrl" rel="noopener" target="_blank">@(announcement.LinkText ?? "Learn more")</a>
+            }
+        </div>
+    }
 
-        <a class="brand" href="/">
-            CANDLE OBSESSION
+    <header class="main-header" data-header>
+        <a class="brand" href="/" aria-label="@shop.Name, home">
+            <svg class="brand-mark" aria-hidden="true"><use href="#i-logo"></use></svg>
+            <span class="brand-name">candle <span>obsession</span></span>
         </a>
 
-        <nav class="main-nav">
-
-            <a href="/">Home</a>
-
-            <a href="/#collection">Shop</a>
-
-            <a href="/#about">Our Story</a>
-
-            <a href="https://www.instagram.com/candleobsession__/">
-                Instagram
-            </a>
-            <a asp-page="/Cart" id="cart-link">
-                🛒 Cart (<span id="cart-count">0</span>)
+        <nav class="main-nav" aria-label="Main">
+            <a href="/shop">Shop</a>
+            <a href="/#gift-guide">Gift guide</a>
+            <a href="/#gift-sets">Gift sets</a>
+            <a href="/#about">Our story</a>
+            <a href="@shop.InstagramUrl" rel="noopener" target="_blank" class="nav-instagram" aria-label="Instagram (opens in a new tab)">
+                <svg class="icon" aria-hidden="true"><use href="#i-instagram"></use></svg>
+                <span>Instagram</span>
             </a>
         </nav>
 
+        <div class="header-actions">
+            <button type="button" class="icon-button evening-toggle" data-evening-toggle aria-pressed="false" hidden>
+                <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"></use></svg>
+                <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"></use></svg>
+                <span class="visually-hidden">Evening mode</span>
+            </button>
+            <a href="/cart" class="cart-link" id="cart-link" data-cart-open aria-label="Shopping cart, 0 items">
+                <svg class="icon" aria-hidden="true"><use href="#i-bag"></use></svg>
+                <span class="cart-count" id="cart-count" data-cart-count aria-hidden="true">0</span>
+            </a>
+        </div>
     </header>
 
-    <main>
+    <main id="main" tabindex="-1">
         @RenderBody()
     </main>
 
+    <partial name="_WaxDrip" model="@("footer")" />
     <footer class="main-footer">
-
-        <h2>CANDLE OBSESSION</h2>
-
-        <p>Made with love, inspired by light.</p>
-
-        <p>&copy; 2026 Candle Obsession</p>
-
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <svg class="brand-mark" aria-hidden="true"><use href="#i-logo"></use></svg>
+                <p class="footer-name">candle obsession</p>
+                <p class="eyebrow">Handmade candles · Cyprus</p>
+                <p>Made with love, inspired by light.</p>
+            </div>
+            <nav aria-label="Shop">
+                <h2>Shop</h2>
+                <a href="/shop">All products</a>
+                @foreach (var guide in Catalog.Guides)
+                {
+                    <a href="/shop?guide=@guide.Id">@guide.Name</a>
+                }
+            </nav>
+            <nav aria-label="Customer care">
+                <h2>Customer care</h2>
+                <a href="/shipping">Shipping &amp; delivery</a>
+                <a href="/returns">Returns &amp; refunds</a>
+                <a href="/withdraw">Withdraw from contract</a>
+                <a href="/candle-care">Candle care &amp; safety</a>
+                <a href="/contact">Contact</a>
+            </nav>
+            <nav aria-label="Legal">
+                <h2>Legal</h2>
+                <a href="/terms">Terms of sale</a>
+                <a href="/privacy">Privacy policy</a>
+                <a href="@shop.InstagramUrl" rel="noopener" target="_blank">Instagram @shop.InstagramHandle</a>
+            </nav>
+        </div>
+        <div class="footer-legal">
+            <p>
+                All prices in EUR.
+                @if (shop.PricesIncludeVat == true)
+                {
+                    <text>Prices include VAT.</text>
+                }
+                else if (shop.PricesIncludeVat == false)
+                {
+                    <text>VAT is not charged.</text>
+                }
+            </p>
+            <p>&copy; @DateTime.UtcNow.Year @(string.IsNullOrWhiteSpace(shop.LegalName) ? shop.Name : shop.LegalName)</p>
+        </div>
     </footer>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 
-    <script>
-        lucide.createIcons();
-    </script>
+    <div id="cart-drawer-root" data-island="cart-drawer"></div>
+    <div class="evening-veil" aria-hidden="true"></div>
+
+    <script type="application/json" id="co-catalog">@Html.Raw(Catalog.ToClientJson().Replace("</", "<\\/"))</script>
+    <script type="module" src="~/dist/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-
 </body>
 </html>

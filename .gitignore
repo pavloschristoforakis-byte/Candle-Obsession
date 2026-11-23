@@ -1,0 +1,21 @@
+# .NET build output
+bin/
+obj/
+*.user
+.vs/
+
+# Local database and data (never commit customer orders)
+App_Data/
+*.db
+*.db-shm
+*.db-wal
+
+# Front-end
+ClientApp/node_modules/
+wwwroot/dist/
+ClientApp/test-results/
+ClientApp/screenshots/
+
+# Secrets
+.env
+appsettings.*.local.json

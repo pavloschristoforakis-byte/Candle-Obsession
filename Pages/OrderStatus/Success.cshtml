@@ -1,0 +1,103 @@
+@page "/order/success/{reference}"
+@model Candle_Obsession.Pages.OrderStatus.SuccessModel
+@{
+    ViewData["Title"] = "Thank you for your order";
+    ViewData["NoIndex"] = true;
+    var o = Model.Order;
+    var paid = o.PaymentStatus == PaymentStatuses.Paid;
+    // Same wording as the checkout: "Free" for a €0 delivery, and for gift wrap only once its price is confirmed.
+    string Price(decimal v) => v == 0 ? "Free" : Money.Eur(v);
+    string WrapPrice(decimal v) => v == 0 && Model.Shop.GiftWrap.PriceConfirmed ? "Free" : Money.Eur(v);
+}
+
+<section class="order-result" aria-labelledby="result-title" data-order-complete="@o.PublicId">
+    <div class="order-result-card">
+        <div class="result-candle" aria-hidden="true">
+            <span class="product-card is-candle is-lit result-flame" data-candle>
+                <partial name="_Flame" />
+            </span>
+        </div>
+        <p class="eyebrow">Order <span translate="no">@o.PublicId[..8]</span></p>
+        <h1 id="result-title">Your order just made our day!</h1>
+        <p class="result-lede">
+            Thank you, @o.FirstName. We've received your order.
+            @if (string.IsNullOrWhiteSpace(Model.Shop.OrderNotificationEmail))
+            {
+                <text>We'll be in touch soon to confirm it.</text>
+            }
+            else
+            {
+                <text>We'll email you at <strong>@o.Email</strong> to confirm it.</text>
+            }
+        </p>
+
+        @if (o.PaymentMethod == "card")
+        {
+            <p class="notice">
+                <svg class="icon" aria-hidden="true"><use href="#i-@(paid ? "check" : "card")"></use></svg>
+                <span>
+                    @if (paid)
+                    {
+                        <text>Payment received. Thank you!</text>
+                    }
+                    else if (o.PaymentProvider is null or "Manual")
+                    {
+                        <text>We'll send you a secure payment link for <strong>@Money.Eur(o.Total)</strong> shortly.</text>
+                    }
+                    else
+                    {
+                        <text>We're confirming your payment with our payment partner. You'll get a confirmation shortly.</text>
+                    }
+                </span>
+            </p>
+        }
+        else if (Model.Payment?.Instructions is { } instructions)
+        {
+            var note = o.PaymentMethod == "cash" && Model.Delivery?.Requires == "none"
+                ? "Please have the exact amount ready when you collect your order. We'll message you to arrange a time and place."
+                : instructions;
+            <p class="notice">
+                <svg class="icon" aria-hidden="true"><use href="#i-@(Model.Payment.Icon)"></use></svg>
+                <span>@note</span>
+            </p>
+        }
+
+        <h2 class="pd-subhead">Order summary</h2>
+        <ul class="summary-items">
+            @foreach (var item in o.OrderItems)
+            {
+                <li class="summary-item">
+                    <span>
+                        @item.Quantity × @item.DisplayName
+                        @if (item.OptionsSummary is not null)
+                        {
+                            <small>@item.OptionsSummary</small>
+                        }
+                    </span>
+                    <span>@Money.Eur(item.TotalPrice)</span>
+                </li>
+            }
+        </ul>
+        <dl class="summary-totals">
+            <div><dt>Subtotal</dt><dd>@Money.Eur(o.Subtotal)</dd></div>
+            <div><dt>Delivery (@(Model.Delivery?.Name ?? o.DeliveryMethod))</dt><dd>@Price(o.ShippingCost)</dd></div>
+            @if (o.GiftWrap)
+            {
+                <div><dt>Gift wrap</dt><dd>@WrapPrice(o.GiftWrapCost)</dd></div>
+            }
+            <div class="summary-final"><dt>Total</dt><dd>@Money.Eur(o.Total)</dd></div>
+        </dl>
+
+        @if (o.GiftMessage is not null)
+        {
+            <p class="gift-card-preview"><svg class="icon" aria-hidden="true"><use href="#i-gift"></use></svg> “@o.GiftMessage”</p>
+        }
+
+        <p class="result-ref">Your order reference: <code>@o.PublicId</code>. Keep it in case you need to contact us or <a href="/withdraw?reference=@Uri.EscapeDataString(o.PublicId)">withdraw from the contract</a>.</p>
+
+        <div class="result-actions">
+            <a class="button" href="/shop">Continue shopping</a>
+            <a class="button button-outline" href="@Model.Shop.InstagramUrl" rel="noopener" target="_blank">Follow us on Instagram</a>
+        </div>
+    </div>
+</section>

@@ -1,31 +1,21 @@
 ﻿@page
-
 @{
     ViewData["Title"] = "Shopping Cart";
+    ViewData["NoIndex"] = true;
 }
 
-<section class="cart-section" id="cart">
+<section class="cart-section" id="cart" aria-labelledby="cart-title">
+    <header class="section-head">
+        <p class="eyebrow">Your selected products</p>
+        <h1 id="cart-title">Your Shopping Cart</h1>
+    </header>
 
-    <p class="subtitle">YOUR SELECTED PRODUCTS</p>
-
-    <h2>Your Shopping Cart</h2>
-
-    <div id="cart-items"></div>
-
-    <div class="cart-summary">
-
-        <h3>
-            Total: €<span id="cart-total">0.00</span>
-        </h3>
-
-        <button type="button" class="checkout-button" onclick="goToCheckout()">
-            Proceed to Checkout
-        </button>
-
-        <a href="/#collection" class="continue-shopping">
-            Continue Shopping
-        </a>
-
+    @* The cart lives in the browser (localStorage); ClientApp renders it here (islands/CartView.tsx). *@
+    <div class="cart-page" data-island="cart-page">
+        <p class="cart-loading">Loading your cart…</p>
+        <p class="cart-error" role="alert">We couldn't load your cart. Please refresh the page, or <a href="/contact">contact us</a> to order.</p>
+        <noscript>
+            <p>The cart needs JavaScript. You can also order by messaging us on Instagram.</p>
+        </noscript>
     </div>
-
 </section>

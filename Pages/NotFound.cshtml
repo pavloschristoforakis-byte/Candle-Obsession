@@ -1,0 +1,34 @@
+@page "/not-found"
+@model NotFoundModel
+@{
+    var (eyebrow, title, lede) = Model.Code switch
+    {
+        429 => ("Too many attempts", "Let the wick rest a moment",
+                "You've sent several requests in a short time. Please wait a minute and try again."),
+        400 => ("Session expired", "Something went out of date",
+                "Your form session expired or the request was incomplete. Please go back, refresh the page and try again."),
+        _ => ($"Error {Model.Code}", "This candle has burned out",
+              "We couldn't find that page. It may have moved, or the link may be wrong."),
+    };
+    ViewData["Title"] = Model.Code switch { 429 => "Too many attempts", 400 => "Session expired", _ => "Page not found" };
+    ViewData["NoIndex"] = true;
+    var path = HttpContext.Features.Get<Microsoft.AspNetCore.Diagnostics.IStatusCodeReExecuteFeature>()?.OriginalPath ?? "";
+}
+<section class="order-result" aria-labelledby="nf-title">
+    <div class="order-result-card">
+        <div class="result-candle" aria-hidden="true">
+            <span class="product-card is-candle is-out result-flame" data-candle><partial name="_Flame" /></span>
+        </div>
+        <p class="eyebrow">@eyebrow</p>
+        <h1 id="nf-title">@title</h1>
+        <p class="result-lede">@lede</p>
+        <div class="result-actions">
+            @if (Model.Code == 400 && path.StartsWith("/withdraw", StringComparison.OrdinalIgnoreCase))
+            {
+                <a class="button" href="/withdraw">Back to the withdrawal form</a>
+            }
+            <a class="button@(Model.Code == 400 && path.StartsWith("/withdraw", StringComparison.OrdinalIgnoreCase) ? " button-outline" : "")" href="/">Back to home</a>
+            <a class="button button-outline" href="/shop">Browse the shop</a>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,99 @@
+@page "/candle-care"
+@inject Microsoft.Extensions.Options.IOptions<Candle_Obsession.Services.ShopOptions> ShopOpts
+@{
+    ViewData["Title"] = "Candle Care & Safety";
+    ViewData["Description"] = "How to get the best, safest burn from your handmade candle, plus safety tips for wax melts, reed diffusers and car fresheners.";
+
+    var shop = ShopOpts.Value;
+}
+<article class="info-page">
+    <header class="info-hero">
+        <p class="eyebrow">CUSTOMER CARE</p>
+        <h1>Candle Care &amp; Safety</h1>
+        <p class="info-updated">Last updated: <mark>[TODO: date]</mark></p>
+    </header>
+    <partial name="_DraftNotice" />
+    <div class="prose">
+        <section>
+            <h2>Getting the best from your candle</h2>
+            <ol>
+                <li><strong>First burn: be patient.</strong> Let the candle burn until the whole top surface has melted to the edges (a full melt pool). This usually takes a couple of hours <mark>[TODO: adjust for your candle sizes]</mark>. It stops "tunnelling" and gives an even burn for the rest of the candle's life.</li>
+                <li><strong>Trim the wick to about 5 mm</strong> before every burn. A short wick gives a cleaner, calmer flame with less soot.</li>
+                <li><strong>Burn for no more than 3–4 hours at a time.</strong> Then blow it out, let it cool completely and trim the wick before lighting again.</li>
+                <li><strong>Stop when about 1 cm of wax is left</strong> at the bottom. Burning lower can overheat the container.</li>
+            </ol>
+        </section>
+
+        <section>
+            <h2>Safety first</h2>
+            <ul>
+                <li><strong>Never leave a burning candle unattended</strong>, and never fall asleep with a candle lit.</li>
+                <li>Keep candles out of reach of <strong>children and pets</strong>.</li>
+                <li>Keep away from <strong>drafts</strong>, open windows, fans and air conditioning, and from anything that can catch fire: curtains, books, paper, decorations and hair.</li>
+                <li>Always place the candle on a <strong>stable, heat-resistant surface</strong>. Keep burning candles at least 10 cm apart. <mark>[TODO: confirm spacing for your candle sizes]</mark></li>
+                <li><strong>Glass and other containers get hot.</strong> Don't touch or move a candle while it is lit or the wax is still liquid.</li>
+                <li>If the flame gets too big, smokes or flickers a lot, blow it out, let it cool, trim the wick and check for drafts.</li>
+                <li>Don't use water to put out a candle, as hot wax can splatter. Use a snuffer or blow gently.</li>
+                <li>Remove any matches, wick trimmings or debris from the wax.</li>
+                <li>Stop using a container that is cracked or chipped.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Wax melts and burners</h2>
+            <ul>
+                <li>Use wax melts only in a burner made for them, following the burner's instructions.</li>
+                <li>Put the burner on a stable, heat-resistant surface, away from children, pets, drafts and anything flammable.</li>
+                <li>Never leave a tealight burner unattended, and don't put a tealight in the wax dish.</li>
+                <li>Don't move the burner or pour out the wax while it is hot. Let it cool and harden first, then pop it out.</li>
+                <li>Don't add water to melted wax.</li>
+                <li>Wax melts look like sweets: keep them away from children and pets, and don't eat them.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Reed diffusers</h2>
+            <ul>
+                <li>Keep out of reach of children and pets. <strong>Do not drink</strong> the oil.</li>
+                <li>Avoid contact with skin and eyes. If it gets on your skin, wash with soap and water. If it gets in your eyes, rinse with water for several minutes.</li>
+                <li>The oil can damage wood, painted, varnished and plastic surfaces. Place the diffuser on a protected surface and wipe up spills straight away.</li>
+                <li>Flip the reeds over the bottle or a tissue, never over furniture.</li>
+                <li>Keep away from flames and heat sources.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Car air fresheners</h2>
+            <ul>
+                <li>Hang or fix it where it <strong>does not block your view</strong> or interfere with controls, airbags or air vents.</li>
+                <li>Don't let it touch the dashboard, seats or other surfaces. Fragrance oils can mark or damage plastic and leather, especially in Cyprus heat.</li>
+                <li>Keep away from children and pets. Don't chew or eat it.</li>
+                <li>Avoid contact with skin and eyes. Wash your hands after handling.</li>
+                <li>If you feel unwell while driving, open a window and remove the freshener.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>If something goes wrong</h2>
+            <p>If anyone swallows a product or gets it in their eyes, get medical advice and show the product label. In Cyprus, the Poison Information Centre can help: <mark>[TODO: verify and add phone number]</mark>. In an emergency call <strong>112</strong>.</p>
+        </section>
+
+        <section>
+            <h2>Product safety labels</h2>
+            <p>Please read the safety label on your product before use, especially if you have allergies, asthma or sensitive skin. If you need to know which fragrance allergens a scent contains, <a href="/contact">ask us</a> before ordering. <mark>[TODO owner: once every product carries its CLP label, you can say so here and list allergens on each product page]</mark></p>
+            <p><mark>[TODO owner: scented candles, wax melts and reed diffusers are treated as chemical mixtures under the EU CLP Regulation (EC) No 1272/2008 and usually need a CLP label per fragrance (hazard statements and pictograms where required, and allergen wording such as EUH208 "Contains … May produce an allergic reaction."). Get the label information for each scent from your fragrance supplier's Safety Data Sheet, put it on every product, and add it to each product page. Car fresheners may need the same. Also verify the online-listing information required by the EU General Product Safety Regulation (EU) 2023/988.]</mark></p>
+        </section>
+
+        <section>
+            <h2>Questions?</h2>
+            <p>Not sure about something? <a href="/contact">Ask us</a> or send a DM on <a href="@shop.InstagramUrl">Instagram</a>. Browse the <a href="/shop">shop</a> for your next favourite scent.</p>
+        </section>
+    </div>
+</article>
+
+@functions {
+    private static Microsoft.AspNetCore.Html.IHtmlContent Or(string? value, string todo) =>
+        string.IsNullOrWhiteSpace(value)
+            ? new Microsoft.AspNetCore.Html.HtmlString("<mark>[TODO: " + System.Net.WebUtility.HtmlEncode(todo) + "]</mark>")
+            : new Microsoft.AspNetCore.Html.HtmlString(System.Net.WebUtility.HtmlEncode(value));
+}
