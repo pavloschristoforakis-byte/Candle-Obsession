@@ -6,7 +6,8 @@ import { canHover, prefersReducedMotion } from '../lib/util';
 
 export function initCardSpotlight(root: ParentNode = document): void {
   if (!canHover()) return;
-  for (const card of root.querySelectorAll<HTMLElement>('.product-card[data-product-card]:not(.pd-slide)')) {
+  // data-tilt="off": switched off for that product in the admin product editor.
+  for (const card of root.querySelectorAll<HTMLElement>('.product-card[data-product-card]:not(.pd-slide):not([data-tilt="off"])')) {
     let frame = 0;
     card.addEventListener('pointermove', (e) => {
       if (frame) return;

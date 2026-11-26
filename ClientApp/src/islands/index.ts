@@ -15,11 +15,12 @@ const loaders: Record<string, Loader> = {
   'gift-reveal': () => import('./GiftReveal'),
   'cart-page': () => import('./CartPage'),
   'cart-drawer': () => import('./CartDrawer'),
+  'product-admin': () => import('./admin/ProductAdmin'), // owner-only, on /admin/products
 };
 
 // Purely decorative islands are skipped entirely for reduced-motion visitors (server text stays).
 const decorative = new Set(['hero-title', 'shiny-text']);
-const eager = new Set(['hero-title', 'shiny-text', 'cart-page']);
+const eager = new Set(['hero-title', 'shiny-text', 'cart-page', 'product-admin']);
 
 /** Loads and mounts an island. Resolves true once it is mounted, false if it is loading, skipped or failed. */
 async function mount(el: HTMLElement, opts?: unknown): Promise<boolean> {

@@ -5,9 +5,12 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <ClientAppDir>$(MSBuildProjectDirectory)\ClientApp\</ClientAppDir>
+    <!-- The local database lives in App_Data; keep it out of the project so `dotnet watch` ignores it. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);App_Data\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="15.1.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -32,8 +35,7 @@
   <!-- Builds the front-end (ClientApp → wwwroot/dist) if it hasn't been built yet.
        Run `npm run build` in ClientApp yourself after changing front-end code (or `npm run watch`).
        The Dockerfile always builds it. Skip with: dotnet build -p:SkipClientBuild=true -->
-  <Target Name="BuildClientApp" BeforeTargets="BeforeBuild"
-          Condition="'$(SkipClientBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)\wwwroot\dist\app.js')">
+  <Target Name="BuildClientApp" BeforeTargets="BeforeBuild" Condition="'$(SkipClientBuild)' != 'true' And !Exists('$(MSBuildProjectDirectory)\wwwroot\dist\app.js')">
     <Message Importance="high" Text="Building front-end (ClientApp)…" />
     <Exec Command="npm ci" WorkingDirectory="$(ClientAppDir)" Condition="!Exists('$(ClientAppDir)node_modules')" />
     <Exec Command="npm run build" WorkingDirectory="$(ClientAppDir)" />

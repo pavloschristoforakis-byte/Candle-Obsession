@@ -36,9 +36,13 @@ WORKDIR /app
 
 ENV ASPNETCORE_ENVIRONMENT=Production \
     ASPNETCORE_HTTP_PORTS=8080 \
-    ConnectionStrings__DefaultConnection="Data Source=/data/candleobsession.db"
+    ConnectionStrings__DefaultConnection="Data Source=/data/candleobsession.db" \
+    Catalog__Path=/data/products.json \
+    Catalog__ImagesPath=/data/product-images
 
-# /data holds the SQLite database (candleobsession.db) and data-protection keys (/data/keys).
+# /data holds the SQLite database (candleobsession.db), data-protection keys (/data/keys), and what the admin
+# product editor saves: the catalogue (/data/products.json, first copied from Data/products.json) and
+# uploaded photos (/data/product-images).
 # It must be writable by the non-root "app" user that the official image provides ($APP_UID).
 RUN mkdir -p /data && chown "$APP_UID" /data
 

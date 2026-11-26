@@ -9,12 +9,14 @@
     var canBuy = p.AnyPurchasable;
     var flameStyle = flame is null
         ? null
-        : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%");
+        : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%;--flame-scale:{flame.Size:0.##}");
+    var showFlame = p.ShowFlame; // candles by default; can be switched per product in the admin editor
     var headingLevel = ViewData["CardHeading"] as string ?? "h3";
 }
-<article class="product-card@(p.IsCandle ? " is-candle" : "")@(p.GiftSet ? " is-gift" : "")@(flame is null ? " flame-default" : "")@(p.IsSoldOut ? " is-sold-out" : "")"
+<article class="product-card@(showFlame ? " is-candle" : "")@(p.GiftSet ? " is-gift" : "")@(flame is null ? " flame-default" : "")@(p.IsSoldOut ? " is-sold-out" : "")"
          data-product-card
-         data-candle="@(p.IsCandle ? "true" : null)"
+         data-candle="@(showFlame ? "true" : null)"
+         data-tilt="@(p.Effects.Tilt ? null : "off")"
          style="@flameStyle">
     <a class="product-media" href="@p.Url" tabindex="-1" aria-hidden="true">
         @if (image is not null)
@@ -30,13 +32,13 @@
                 <span>Photo coming soon</span>
             </span>
         }
-        @if (p.IsCandle && flame is not null)
+        @if (showFlame && flame is not null)
         {
             <partial name="_Flame" />
         }
     </a>
     <div class="product-body">
-        @if (p.IsCandle && flame is null)
+        @if (showFlame && flame is null)
         {
             <partial name="_Flame" />
         }

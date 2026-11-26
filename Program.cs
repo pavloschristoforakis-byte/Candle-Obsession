@@ -25,9 +25,23 @@ if (config["Admin:Password"] is { Length: > 0 and < AdminOptions.MinPasswordLeng
     throw new InvalidOperationException(
         $"Admin__Password must be at least {AdminOptions.MinPasswordLength} characters (or empty to turn the admin pages off).");
 
-// ---- Products: Data/products.json is the single source of truth ----
-var catalogPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "products.json");
+// ---- Products: one catalogue file is the single source of truth (Data/products.json unless Catalog:Path says otherwise).
+// The admin product editor (/admin/products) rewrites this file and saves uploaded photos to Catalog:ImagesPath, so on a
+// host both must point at storage that survives redeploys (see HOSTING.md). A missing file is created from Data/products.json.
+var catalogOptions = config.GetSection(CatalogOptions.SectionName).Get<CatalogOptions>() ?? new CatalogOptions();
+string FromAppFolder(string path) => Path.GetFullPath(Path.IsPathRooted(path) ? path : Path.Combine(builder.Environment.ContentRootPath, path));
+var bundledCatalogPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "products.json");
+var catalogPath = FromAppFolder(catalogOptions.Path);
+if (!File.Exists(catalogPath))
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(catalogPath)!);
+    File.Copy(bundledCatalogPath, catalogPath);
+}
+
 builder.Services.AddSingleton(ProductCatalog.Load(catalogPath));
+var builtInImagesPath = Path.Combine(builder.Environment.WebRootPath ?? Path.Combine(builder.Environment.ContentRootPath, "wwwroot"), "images", "products");
+var uploadedImagesPath = FromAppFolder(catalogOptions.ImagesPath);
+builder.Services.AddSingleton(sp => new ProductImageStore(builtInImagesPath, uploadedImagesPath, sp.GetRequiredService<ILogger<ProductImageStore>>()));
 builder.Services.AddScoped<OrderCalculator>();
 builder.Services.AddScoped<OrderService>();
 builder.Services.AddSingleton<OrderNotifier>();
@@ -172,6 +186,18 @@ app.UseStaticFiles(new StaticFileOptions
             ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
     },
 });
+
+// Photos uploaded in the admin product editor, when they are kept outside wwwroot (a persistent disk on the host).
+// They are served at the same address as the built-in product photos. Names are never reused, so they can be cached.
+if (app.Services.GetRequiredService<ProductImageStore>().SeparateUploadDirectory is { } uploadDirectory)
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadDirectory),
+        RequestPath = "/images/products",
+        OnPrepareResponse = ctx => ctx.Context.Response.Headers.CacheControl = "public, max-age=604800",
+    });
+}
 
 app.UseRateLimiter();
 app.UseAuthentication();

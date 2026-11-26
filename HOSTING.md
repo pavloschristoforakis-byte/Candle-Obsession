@@ -352,3 +352,21 @@ Updated after the app code was finished (2026-11-23). The earlier notes about mi
 **.com registrars**
 - Cloudflare Registrar: <https://www.cloudflare.com/products/registrar/>
 - Porkbun `.com`: <https://porkbun.com/tld/com>
+
+## Product editor storage
+
+The admin product editor (`/admin/products`) saves two things on the server:
+
+| What | Setting | In the Docker image |
+|---|---|---|
+| The product catalogue | `Catalog__Path` | `/data/products.json` |
+| Uploaded photos | `Catalog__ImagesPath` | `/data/product-images` |
+
+- **With a persistent disk mounted at `/data`** (the paid Render plan in this guide), edits and photos survive
+  restarts and redeploys. On first start the catalogue is copied from the `Data/products.json` in the code.
+- **On Render's free plan there is no disk.** Edits and uploaded photos are lost whenever the service restarts or
+  redeploys. Use the free plan only to try the editor out.
+- After the first start, the copy on the disk is the one the site uses. A later change to `Data/products.json` in
+  the code does **not** replace it. To keep the two in step, use **Download a backup** in the editor and commit
+  that file as `Data/products.json`.
+- Back up `/data` (database, catalogue, photos) regularly; **Download a backup** covers the catalogue only.

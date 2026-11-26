@@ -1,0 +1,27 @@
+@page "/admin/products"
+@model Candle_Obsession.Pages.Admin.ProductsModel
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    ViewData["Title"] = "Products";
+    ViewData["NoIndex"] = true;
+    ViewData["PageClass"] = "page-admin";
+    var token = Antiforgery.GetAndStoreTokens(HttpContext).RequestToken;
+}
+@section Head {
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+}
+<section class="section admin">
+    <header class="admin-head">
+        <h1>Products</h1>
+        <form method="post" asp-page="/Admin/Login" asp-page-handler="Logout"><button class="button button-small button-ghost" type="submit">Log out</button></form>
+    </header>
+    <partial name="_AdminNav" model="@("products")" />
+
+    @* The editor is the React island ClientApp/src/islands/admin/ProductAdmin.tsx. It reads and saves through
+       the handlers in Products.cshtml.cs (?handler=Data, Save, Delete, Move, Upload, DeleteImage, Export). *@
+    <div class="product-admin" data-island="product-admin" data-endpoint="/admin/products" data-token="@token">
+        <p class="pa-loading">Loading the product editor…</p>
+        <p class="pa-load-error" role="alert">The product editor couldn't load. Please refresh the page.</p>
+        <noscript><p>The product editor needs JavaScript.</p></noscript>
+    </div>
+</section>

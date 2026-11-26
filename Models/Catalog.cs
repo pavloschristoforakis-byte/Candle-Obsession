@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace Candle_Obsession.Models;
 
 /// <summary>Shape of Data/products.json. Property names are camelCase in JSON.</summary>
@@ -7,6 +10,9 @@ public sealed class CatalogDocument
     public List<ProductCategory> Categories { get; set; } = new();
     public List<GiftGuide> Guides { get; set; } = new();
     public List<Product> Products { get; set; } = new();
+
+    /// <summary>Keeps fields this class doesn't know (e.g. "$comment") when the admin editor rewrites the file.</summary>
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 
 public sealed class ProductCategory
@@ -100,8 +106,20 @@ public sealed class Product
     public string? InstagramSource { get; set; }
     public List<string> Todo { get; set; } = new();
 
-    public bool IsCandle => Type == "candle";
-    public bool HasVariants => Variants.Count > 0;
+    /// <summary>true = kept in the catalogue but not shown or sold on the website (set in the admin product editor).</summary>
+    public bool Hidden { get; set; }
+
+    /// <summary>Per-product animation switches (admin product editor → "Animations").</summary>
+    public ProductEffects Effects { get; set; } = new();
+
+    /// <summary>Keeps unknown fields when the admin editor rewrites the file.</summary>
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+
+    /// <summary>Does this product's card get the burning-wick effect? Follows the product type unless switched in the editor.</summary>
+    [JsonIgnore] public bool ShowFlame => Effects.Flame ?? IsCandle;
+
+    [JsonIgnore] public bool IsCandle => Type == "candle";
+    [JsonIgnore] public bool HasVariants => Variants.Count > 0;
 
     public ProductVariant? FindVariant(string? id) =>
         id is null ? null : Variants.FirstOrDefault(v => string.Equals(v.Id, id, StringComparison.OrdinalIgnoreCase));
@@ -119,30 +137,30 @@ public sealed class Product
     }
 
     /// <summary>Can at least one version of this product be added to the cart?</summary>
-    public bool AnyPurchasable => HasVariants ? Variants.Any(IsPurchasable) : IsPurchasable(null);
+    [JsonIgnore] public bool AnyPurchasable => HasVariants ? Variants.Any(IsPurchasable) : IsPurchasable(null);
 
     /// <summary>Lowest known price across variants (for "from €x" labels and the Under €25 guide).</summary>
-    public decimal? MinPrice =>
+    [JsonIgnore] public decimal? MinPrice =>
         HasVariants
             ? Variants.Select(v => PriceFor(v)).Where(p => p is not null).DefaultIfEmpty(PriceEur).Min()
             : PriceEur;
 
     /// <summary>Lowest price among versions that can actually be bought (for "from €x", JSON-LD offer, Under €25 guide).</summary>
-    public decimal? MinPurchasablePrice =>
+    [JsonIgnore] public decimal? MinPurchasablePrice =>
         HasVariants
             ? Variants.Where(IsPurchasable).Select(v => PriceFor(v)).Min()
             : (IsPurchasable(null) ? PriceEur : null);
 
     /// <summary>True when the versions that can be bought have different prices ("from €x").</summary>
-    public bool HasPriceRange =>
+    [JsonIgnore] public bool HasPriceRange =>
         HasVariants && Variants.Where(IsPurchasable).Select(v => PriceFor(v)).Distinct().Count() > 1;
 
-    public bool IsSoldOut =>
+    [JsonIgnore] public bool IsSoldOut =>
         HasVariants ? Variants.All(v => StockFor(v) == Models.StockStatus.OutOfStock) : StockStatus == Models.StockStatus.OutOfStock;
 
-    public ProductImage? MainImage => Images.FirstOrDefault();
+    [JsonIgnore] public ProductImage? MainImage => Images.FirstOrDefault();
 
-    public string Url => $"/products/{Slug}";
+    [JsonIgnore] public string Url => $"/products/{Slug}";
 }
 
 public sealed class ProductScent
@@ -153,8 +171,8 @@ public sealed class ProductScent
     public List<string> Heart { get; set; } = new();
     public List<string> Base { get; set; } = new();
 
-    public bool HasPyramid => Top.Count + Heart.Count + Base.Count > 0;
-    public bool IsEmpty => !HasPyramid && Tags.Count == 0;
+    [JsonIgnore] public bool HasPyramid => Top.Count + Heart.Count + Base.Count > 0;
+    [JsonIgnore] public bool IsEmpty => !HasPyramid && Tags.Count == 0;
 }
 
 public sealed class ProductVariant
@@ -202,12 +220,24 @@ public sealed class ProductImage
     public FlamePoint? Flame { get; set; }
 
     public string Src(int width) => $"/images/products/{File}-{width}.webp";
-    public string SrcSet => $"{Src(400)} 400w, {Src(800)} 800w, {Src(1200)} 1200w";
-    public string OgImage => $"/images/products/{File}-og.jpg";
+    [JsonIgnore] public string SrcSet => $"{Src(400)} 400w, {Src(800)} 800w, {Src(1200)} 1200w";
+    [JsonIgnore] public string OgImage => $"/images/products/{File}-og.jpg";
 }
 
 public sealed class FlamePoint
 {
     public double X { get; set; } = 0.5;
     public double Y { get; set; } = 0.2;
+
+    /// <summary>Flame size multiplier for this photo (1 = normal). Use a smaller flame for small or far-away candles.</summary>
+    public double Size { get; set; } = 1;
+}
+
+public sealed class ProductEffects
+{
+    /// <summary>Burning-wick effect on the card. null = automatic (on for products of type "candle").</summary>
+    public bool? Flame { get; set; }
+
+    /// <summary>Tilt and spotlight that follow the mouse on the product card.</summary>
+    public bool Tilt { get; set; } = true;
 }

@@ -396,6 +396,8 @@ html.js.motion-ok [data-island="hero-title"]:not([data-island-state="mounted"]):
     transition: opacity 0.4s;
 }
 .product-card:hover::before { opacity: 1; }
+/* Tilt and spotlight switched off for this product in the admin editor */
+.product-card[data-tilt="off"]::before { display: none; }
 
 .product-media { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; border-radius: var(--radius-lg) var(--radius-lg) 0 0; background: var(--color-sand); text-decoration: none; }
 .product-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease-out), filter 0.8s; }
@@ -434,7 +436,7 @@ html.js.motion-ok [data-island="hero-title"]:not([data-island-state="mounted"]):
 .price-request { font-family: var(--font-body); font-size: 0.95rem; color: var(--color-text-muted); }
 
 /* ---------- Flame (see Pages/Shared/_Flame.cshtml + ClientApp/src/effects/flame.ts) ---------- */
-.wick-flame { position: absolute; left: var(--flame-x, 50%); top: var(--flame-y, 20%); width: 0; height: 0; z-index: 2; pointer-events: none; transform: scale(var(--flame-size)); }
+.wick-flame { position: absolute; left: var(--flame-x, 50%); top: var(--flame-y, 20%); width: 0; height: 0; z-index: 2; pointer-events: none; transform: scale(calc(var(--flame-size) * var(--flame-scale, 1))); }
 /* Candle without a wick position in its photo: a little wick sits at the top of the card body instead */
 .product-body > .wick-flame { left: 50%; top: 0; }
 .product-body > .wick-flame .wick { opacity: 1; }
@@ -674,6 +676,8 @@ html.motion-ok .scent-tag { animation: scent-in 0.6s var(--ease-out) both, scent
 .admin { max-width: 1200px; margin: 0 auto; }
 .admin.narrow { max-width: 420px; }
 .admin-head { display: flex; justify-content: space-between; align-items: center; }
+.admin-nav { display: flex; gap: 0.5rem; margin: 0.4rem 0 1.6rem; }
+.admin-nav .chip { text-decoration: none; }
 .admin-order { background: var(--color-paper); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; box-shadow: var(--shadow-sm); }
 .admin-order h2 small { font-family: var(--font-body); font-size: 0.85rem; color: var(--color-text-muted); }
 .admin-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }

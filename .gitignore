@@ -19,3 +19,7 @@ ClientApp/screenshots/
 # Secrets
 .env
 appsettings.*.local.json
+
+# Admin product editor: safety copy and temp file written next to Data/products.json
+Data/products.json.bak
+Data/products.json.tmp

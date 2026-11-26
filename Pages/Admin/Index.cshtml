@@ -11,6 +11,7 @@
         <h1>Orders</h1>
         <form method="post" asp-page="/Admin/Login" asp-page-handler="Logout"><button class="button button-small button-ghost" type="submit">Log out</button></form>
     </header>
+    <partial name="_AdminNav" model="@("orders")" />
 
     @if (s is not null)
     {

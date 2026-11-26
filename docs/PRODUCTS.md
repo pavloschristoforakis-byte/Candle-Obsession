@@ -346,6 +346,10 @@ These show a "Photo coming soon" placeholder:
 
 ## 6. How to edit a product or add photos
 
+**The easy way: the product editor.** Log in at `/admin`, choose **Products**, and add or edit products, upload
+photos, set prices and place the candle flame, all on screen. The steps below are the by-hand way (editing the
+file directly), which still works.
+
 ### 6a. Editing `Data/products.json`
 
 All products live in `Data/products.json`. It's a text file in JSON format: be careful with commas and quotes,

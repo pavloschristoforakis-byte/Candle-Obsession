@@ -23,6 +23,18 @@ The online shop for **Candle Obsession**, a small handmade-candle business in Cy
 
 ## Run it locally
 
+**Quickest (Windows PowerShell):** one command runs the whole site, rebuilds the front end on save and restarts
+the site when C#/Razor files change. Stop with Ctrl+C; restart it after editing `Data/products.json`.
+
+```powershell
+.\dev.ps1              # http://localhost:5199, admin password printed in the window
+.\dev.ps1 -Port 5300   # another port
+```
+
+If Windows says running scripts is disabled, run `powershell -ExecutionPolicy Bypass -File .\dev.ps1` instead.
+
+**Step by step (any OS):**
+
 ```bash
 # 1. Build the front-end (once, and after changing anything in ClientApp/)
 cd ClientApp
@@ -126,6 +138,22 @@ Set the `Admin__Password` environment variable (on the host, or in your shell lo
 # local example (Git Bash)
 Admin__Password='a-long-local-test-password' dotnet run --environment Development --urls http://localhost:5199
 ```
+
+### Product editor (`/admin/products`)
+
+Add, edit, hide, reorder and delete products without touching code: prices, availability, photos, scent details,
+versions (colours/sizes), customer questions, gift guides and animations (flame on/off, flame position and size
+per photo, tilt, gift-box reveal). Photos are uploaded in the editor, cropped to 4:5 and resized on the server
+(Magick.NET), and camera data such as GPS location is removed.
+
+- Saving rewrites the catalogue file (`Catalog:Path`, default `Data/products.json`) and the site updates at once.
+  The previous version is kept next to it as `products.json.bak`.
+- Uploaded photos go to `Catalog:ImagesPath` (default `wwwroot/images/products`).
+- Locally these are files in the repo, so commit them like any other change. On a host they must be on a
+  persistent disk: see [HOSTING.md](HOSTING.md#product-editor-storage).
+- Code: `Pages/Admin/Products.cshtml(.cs)`, `Services/ProductEditor.cs` (checks), `Services/ProductImageStore.cs`
+  (photos), `ClientApp/src/islands/admin/` (screen), `wwwroot/css/admin.css`.
+- Test: `npm run test:admin` in `ClientApp` (changes data: read the header of `scripts/admin-e2e.mjs` first).
 
 ## Deploying
 

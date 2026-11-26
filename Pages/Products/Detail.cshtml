@@ -91,14 +91,14 @@
                 {
                     var img = p.Images[i];
                     var flame = img.Flame;
-                    <figure class="pd-slide product-card@(p.IsCandle && flame is not null ? " is-candle" : "")" id="photo-@(i + 1)"
-                            data-product-card data-candle="@(p.IsCandle && flame is not null ? "true" : null)"
-                            style="@(flame is null ? null : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%"))">
+                    <figure class="pd-slide product-card@(p.ShowFlame && flame is not null ? " is-candle" : "")" id="photo-@(i + 1)"
+                            data-product-card data-candle="@(p.ShowFlame && flame is not null ? "true" : null)"
+                            style="@(flame is null ? null : FormattableString.Invariant($"--flame-x:{flame.X * 100:0.#}%;--flame-y:{flame.Y * 100:0.#}%;--flame-scale:{flame.Size:0.##}"))">
                         <div class="product-media">
                             <img src="@img.Src(1200)" srcset="@img.SrcSet" sizes="(max-width: 900px) 100vw, 50vw"
                                  width="1200" height="1500" alt="@img.Alt"
                                  loading="@(i == 0 ? "eager" : "lazy")" fetchpriority="@(i == 0 ? "high" : null)" decoding="async" />
-                            @if (p.IsCandle && flame is not null)
+                            @if (p.ShowFlame && flame is not null)
                             {
                                 <partial name="_Flame" />
                             }
